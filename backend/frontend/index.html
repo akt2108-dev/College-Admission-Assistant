@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>University Counselling Assistant</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── Reset & tokens ───────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:          #080e18;
+  --surface:     rgba(14,22,38,0.92);
+  --border:      rgba(255,255,255,0.07);
+  --border-gold: rgba(210,170,80,0.25);
+  --gold:        #d4aa50;
+  --gold-lt:     #f0cf80;
+  --gold-dim:    rgba(212,170,80,0.12);
+  --teal:        #3ecfb2;
+  --teal-dim:    rgba(62,207,178,0.1);
+  --red:         #e8635a;
+  --amber:       #f09040;
+  --yellow:      #f0d050;
+  --green:       #4cca88;
+  --blue:        #5b9cf6;
+  --text:        #e4ddd2;
+  --muted:       #7a8fa8;
+  --radius:      20px;
+  --font-display:'Fraunces', serif;
+  --font-body:   'Instrument Sans', sans-serif;
+}
+
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* ── Ambient background ──────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 10%, rgba(212,170,80,0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 50% 60% at 85% 90%, rgba(62,207,178,0.05) 0%, transparent 100%),
+    radial-gradient(ellipse 80% 80% at 50% 50%, #080e18 0%, #030609 100%);
+}
+
+/* ── Chat shell ──────────────────────────────── */
+#app{
+  position:relative;z-index:1;
+  width:460px;
+  height:90vh;
+  max-height:760px;
+  display:flex;
+  flex-direction:column;
+  background:var(--surface);
+  backdrop-filter:blur(24px);
+  border:1px solid var(--border-gold);
+  border-radius:var(--radius);
+  box-shadow:0 40px 100px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset;
+  animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;
+  opacity:0;transform:translateY(30px);
+}
+
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+/* ── Header ──────────────────────────────────── */
+#hdr{
+  padding:16px 18px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+}
+
+.hdr-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),#6b4f1a);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  box-shadow:0 0 0 3px var(--gold-dim);
+  animation:pulse 3s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--gold-dim)}50%{box-shadow:0 0 0 7px rgba(212,170,80,.04)}}
+
+.hdr-info h3{font-family:var(--font-display);font-size:.95rem;font-weight:500;color:var(--text);letter-spacing:.01em}
+.hdr-sub{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);margin-top:2px}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:#4cca88;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.hdr-btns{margin-left:auto;display:flex;gap:6px}
+.ico-btn{
+  width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:14px;transition:all .2s;
+}
+.ico-btn:hover{background:var(--gold-dim);color:var(--gold);border-color:var(--border-gold)}
+
+/* ── Messages ─────────────────────────────────── */
+#msgs{
+  flex:1;overflow-y:auto;
+  padding:16px 14px 8px;
+  display:flex;flex-direction:column;gap:4px;
+  scroll-behavior:smooth;
+}
+#msgs::-webkit-scrollbar{width:3px}
+#msgs::-webkit-scrollbar-thumb{background:rgba(212,170,80,.15);border-radius:3px}
+
+.row{display:flex;align-items:flex-end;gap:8px;animation:pop .3s cubic-bezier(.16,1,.3,1) forwards;opacity:0;transform:translateY(10px)}
+.row.user{flex-direction:row-reverse}
+@keyframes pop{to{opacity:1;transform:translateY(0)}}
+
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-bottom:2px}
+.av.bot{background:linear-gradient(135deg,var(--gold),#4a3010)}
+.av.usr{background:linear-gradient(135deg,#2a5080,#0e1e30);font-size:11px}
+
+.col{display:flex;flex-direction:column;max-width:82%}
+.row.user .col{align-items:flex-end}
+
+.bbl{
+  padding:9px 13px;border-radius:14px;
+  font-size:.84rem;line-height:1.55;
+  word-break:break-word;
+}
+.bbl.bot{
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-bottom-left-radius:3px;
+}
+.bbl.usr{
+  background:linear-gradient(135deg,var(--gold),#a87428);
+  color:#1a0e00;font-weight:500;
+  border-bottom-right-radius:3px;
+}
+.ts{font-size:.62rem;color:var(--muted);opacity:.6;margin-top:3px;padding:0 4px}
+.row.user .ts{text-align:right}
+
+/* ── Typing ──────────────────────────────────── */
+#typing{display:none;align-items:flex-end;gap:8px;padding:4px 0}
+#typing.on{display:flex;animation:pop .3s forwards}
+.tbl{
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:14px;border-bottom-left-radius:3px;
+  padding:11px 14px;display:flex;gap:5px;align-items:center;
+}
+.td{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.4;animation:tdot 1.2s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.2s}
+.td:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1}}
+
+/* ── Rich cards ──────────────────────────────── */
+
+/* -- Prediction card -- */
+.pred-card{
+  margin-top:6px;
+  border:1px solid var(--border-gold);
+  border-radius:14px;overflow:hidden;
+  font-size:.82rem;
+  animation:pop .4s .05s cubic-bezier(.16,1,.3,1) forwards;
+  opacity:0;transform:translateY(10px);
+}
+.pred-meta{
+  background:var(--gold-dim);
+  border-bottom:1px solid var(--border-gold);
+  padding:10px 14px;
+  display:flex;gap:20px;flex-wrap:wrap;
+}
+.pred-meta-item{display:flex;flex-direction:column;gap:2px}
+.pred-meta-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pred-meta-val{font-size:.82rem;font-weight:500;color:var(--gold-lt)}
+
+.pred-group{padding:10px 14px 4px}
+.pred-group-title{
+  font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;
+  font-weight:500;margin-bottom:7px;display:flex;align-items:center;gap:6px;
+}
+.pred-branch-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.pred-branch{
+  padding:4px 10px;border-radius:20px;
+  font-size:.76rem;font-weight:500;
+  border:1px solid;
+}
+
+/* chance colours */
+.ch-vh{color:#4cca88;border-color:rgba(76,202,136,.3);background:rgba(76,202,136,.08)}
+.ch-h {color:#5b9cf6;border-color:rgba(91,156,246,.3);background:rgba(91,156,246,.08)}
+.ch-m {color:#f0d050;border-color:rgba(240,208,80,.3);background:rgba(240,208,80,.08)}
+.ch-l {color:#f09040;border-color:rgba(240,144,64,.3);background:rgba(240,144,64,.08)}
+.ch-vl{color:#e8635a;border-color:rgba(232,99,90,.3);background:rgba(232,99,90,.08)}
+
+/* -- Seat card -- */
+.seat-card{
+  margin-top:6px;
+  border:1px solid rgba(62,207,178,.2);
+  border-radius:14px;overflow:hidden;font-size:.82rem;
+  animation:pop .4s .05s cubic-bezier(.16,1,.3,1) forwards;
+  opacity:0;transform:translateY(10px);
+}
+.seat-header{
+  background:var(--teal-dim);border-bottom:1px solid rgba(62,207,178,.15);
+  padding:10px 14px;display:flex;justify-content:space-between;align-items:center;
+}
+.seat-title{font-family:var(--font-display);font-size:.9rem;font-weight:500;color:var(--teal)}
+.seat-total{font-size:.72rem;color:var(--muted)}
+.seat-total span{color:var(--teal);font-weight:600;font-size:.85rem}
+
+.seat-bars{padding:12px 14px 10px;display:flex;flex-direction:column;gap:8px}
+.seat-row{display:flex;flex-direction:column;gap:3px}
+.seat-row-top{display:flex;justify-content:space-between;align-items:center}
+.seat-row-label{font-size:.74rem;color:var(--text)}
+.seat-row-count{font-size:.72rem;color:var(--teal);font-weight:500}
+.seat-bar-bg{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.seat-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),#2a9a85);transition:width .6s cubic-bezier(.16,1,.3,1)}
+
+/* -- Info / error card -- */
+.info-card{
+  margin-top:4px;padding:10px 13px;
+  background:rgba(91,156,246,.06);
+  border:1px solid rgba(91,156,246,.18);
+  border-radius:12px;font-size:.81rem;color:var(--text);
+  line-height:1.55;
+}
+.err-card{
+  margin-top:4px;padding:10px 13px;
+  background:rgba(232,99,90,.06);
+  border:1px solid rgba(232,99,90,.2);
+  border-radius:12px;font-size:.81rem;color:#f09090;
+}
+
+/* ── Counselling card ── */
+.csl-card{
+  margin-top:7px;
+  border:1px solid rgba(212,170,80,.22);
+  border-radius:13px;overflow:hidden;font-size:.82rem;
+  animation:pop .4s .05s cubic-bezier(.16,1,.3,1) forwards;opacity:0;transform:translateY(10px);
+}
+.csl-hdr{
+  background:linear-gradient(135deg,rgba(212,170,80,.15),rgba(212,170,80,.06));
+  border-bottom:1px solid rgba(212,170,80,.18);
+  padding:10px 14px;display:flex;align-items:center;gap:8px;
+}
+.csl-hdr-icon{font-size:1rem}
+.csl-hdr-title{font-family:var(--font-display);font-size:.88rem;font-weight:500;color:var(--gold-lt)}
+.csl-body{
+  padding:12px 14px;color:var(--text);line-height:1.65;font-size:.81rem;
+  white-space:pre-wrap;
+  max-height:320px;overflow-y:auto;
+}
+.csl-body::-webkit-scrollbar{width:3px}
+.csl-body::-webkit-scrollbar-thumb{background:rgba(212,170,80,.2);border-radius:3px}
+
+/* ── Chips ────────────────────────────────────── */
+#chips{padding:6px 14px 4px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+
+.chip{
+  padding:6px 12px;border-radius:20px;font-size:.76rem;
+  font-family:var(--font-body);font-weight:500;cursor:pointer;
+  transition:all .18s;
+  animation:cpop .25s cubic-bezier(.34,1.56,.64,1) forwards;
+  opacity:0;transform:scale(.85);
+}
+@keyframes cpop{to{opacity:1;transform:scale(1)}}
+
+.chip.action{
+  border:1px solid var(--border-gold);
+  background:var(--gold-dim);color:var(--gold-lt);
+}
+.chip.action:hover{background:rgba(212,170,80,.22);border-color:rgba(212,170,80,.5);transform:translateY(-1px)}
+
+.chip.suggest{
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--muted);
+}
+.chip.suggest:hover{background:rgba(255,255,255,.07);color:var(--text);border-color:rgba(255,255,255,.15)}
+
+.chip:active{transform:scale(.95)!important}
+
+/* ── Input ────────────────────────────────────── */
+#inp-area{
+  padding:12px 14px 16px;
+  border-top:1px solid var(--border);
+  display:flex;gap:8px;align-items:center;
+  flex-shrink:0;
+}
+#inp-wrap{
+  flex:1;display:flex;align-items:center;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:0 12px;
+  transition:border-color .2s,background .2s;
+}
+#inp-wrap:focus-within{border-color:rgba(212,170,80,.4);background:rgba(255,255,255,.06)}
+#inp{
+  flex:1;background:none;border:none;outline:none;
+  font-family:var(--font-body);font-size:.84rem;
+  color:var(--text);padding:10px 0;caret-color:var(--gold);
+}
+#inp::placeholder{color:rgba(122,143,168,.55)}
+#send{
+  width:38px;height:38px;border-radius:11px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#9a6820);
+  color:#1a0e00;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+  box-shadow:0 4px 14px rgba(212,170,80,.25);
+}
+#send:hover{transform:scale(1.07);box-shadow:0 6px 20px rgba(212,170,80,.4)}
+#send:active{transform:scale(.94)}
+#send:disabled{opacity:.35;cursor:default;transform:none;box-shadow:none}
+
+/* ── Welcome ─────────────────────────────────── */
+.welcome{
+  background:var(--gold-dim);border:1px solid var(--border-gold);
+  border-radius:14px;padding:14px 16px;margin-bottom:8px;
+  animation:pop .5s .15s forwards;opacity:0;transform:translateY(10px);
+}
+.welcome h4{font-family:var(--font-display);font-size:.9rem;font-weight:500;color:var(--gold-lt);margin-bottom:5px}
+.welcome p{font-size:.78rem;color:var(--muted);line-height:1.55;font-weight:300}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Header -->
+  <div id="hdr">
+    <div class="hdr-avatar">🎓</div>
+    <div class="hdr-info">
+      <h3>Counselling Assistant</h3>
+      <div class="hdr-sub"><div class="hdr-dot"></div>Available now</div>
+    </div>
+    <div class="hdr-btns">
+      <div class="ico-btn" title="Clear chat" onclick="clearChat()">🗑</div>
+      <div class="ico-btn" title="Minimize" onclick="toggleMin()">−</div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div id="msgs"></div>
+
+  <!-- Typing indicator -->
+  <div id="typing">
+    <div class="av bot">🎓</div>
+    <div class="tbl"><div class="td"></div><div class="td"></div><div class="td"></div></div>
+  </div>
+
+  <!-- Action + suggestion chips -->
+  <div id="chips"></div>
+
+  <!-- Input -->
+  <div id="inp-area">
+    <div id="inp-wrap">
+      <input id="inp" placeholder="Type your rank, category, quota…" autocomplete="off"/>
+    </div>
+    <button id="send" onclick="sendMsg()" title="Send">➤</button>
+  </div>
+
+</div>
+
+<script>
+/* ── State ────────────────────────────────────── */
+const userId = "student_" + Math.floor(Math.random() * 100000);
+
+// API base: use current origin when deployed, localhost for dev
+const API_BASE = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
+  ? "http://127.0.0.1:8000"
+  : window.location.origin;
+
+const DEFAULT_ACTIONS = [
+  { label: "📊 Predict My Branch",    value: "I want to predict my branch" },
+  { label: "💺 Seat Distribution",    value: "Show seat distribution" },
+  { label: "📋 Counselling Process",  value: "Explain the counselling process" },
+];
+
+/* ── Helpers ──────────────────────────────────── */
+function now() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function $(id) { return document.getElementById(id); }
+
+function scrollBottom() {
+  const m = $("msgs");
+  m.scrollTop = m.scrollHeight;
+}
+
+/* ── Add plain text message bubble ──────────────── */
+function addBubble(html, side) {
+  const m = $("msgs");
+  const row = document.createElement("div");
+  row.className = `row ${side}`;
+
+  const av = document.createElement("div");
+  av.className = `av ${side === "bot" ? "bot" : "usr"}`;
+  av.textContent = side === "bot" ? "🎓" : "👤";
+
+  const col = document.createElement("div");
+  col.className = "col";
+
+  const bbl = document.createElement("div");
+  bbl.className = `bbl ${side}`;
+  bbl.innerHTML = html.replace(/\n/g, "<br>");
+
+  const ts = document.createElement("div");
+  ts.className = "ts";
+  ts.textContent = now();
+
+  col.appendChild(bbl);
+  col.appendChild(ts);
+
+  if (side === "user") {
+    row.appendChild(col);
+    row.appendChild(av);
+  } else {
+    row.appendChild(av);
+    row.appendChild(col);
+  }
+
+  m.appendChild(row);
+  scrollBottom();
+  return col; // so we can append rich cards to it
+}
+
+/* ── Rich card builders ──────────────────────── */
+
+const CHANCE_LEVELS = ["Very High", "High", "Moderate", "Low", "Very Low"];
+const CHANCE_CSS    = { "Very High": "ch-vh", "High": "ch-h", "Moderate": "ch-m", "Low": "ch-l", "Very Low": "ch-vl" };
+const CHANCE_ICONS  = { "Very High": "🔵", "High": "🟢", "Moderate": "🟡", "Low": "🟠", "Very Low": "🔴" };
+
+function buildPredictionCard(data) {
+  const card = document.createElement("div");
+  card.className = "pred-card";
+
+  // Meta row
+  const meta = document.createElement("div");
+  meta.className = "pred-meta";
+
+  const fields = [
+    ["Rank",     data.rank],
+    ["Category", data.category],
+    ["Quota",    data.quota],
+  ];
+
+  fields.forEach(([label, val]) => {
+    meta.innerHTML += `
+      <div class="pred-meta-item">
+        <span class="pred-meta-label">${label}</span>
+        <span class="pred-meta-val">${val}</span>
+      </div>`;
+  });
+
+  card.appendChild(meta);
+
+  // Branch groups
+  const branches = data.branches || {};
+  CHANCE_LEVELS.forEach(level => {
+    if (!branches[level] || branches[level].length === 0) return;
+    const css = CHANCE_CSS[level];
+    const icon = CHANCE_ICONS[level];
+
+    const grp = document.createElement("div");
+    grp.className = "pred-group";
+    grp.innerHTML = `<div class="pred-group-title ${css}">${icon} ${level} Chance</div>`;
+
+    const list = document.createElement("div");
+    list.className = "pred-branch-list";
+    branches[level].forEach(b => {
+      const tag = document.createElement("span");
+      tag.className = `pred-branch ${css}`;
+      tag.textContent = b;
+      list.appendChild(tag);
+    });
+
+    grp.appendChild(list);
+    card.appendChild(grp);
+  });
+
+  return card;
+}
+
+function buildSeatCard(data) {
+  if (!data || !data.branch) return null;
+  const card = document.createElement("div");
+  card.className = "seat-card";
+
+  card.innerHTML = `
+    <div class="seat-header">
+      <span class="seat-title">${data.branch} — ${data.year}</span>
+      <span class="seat-total">Total <span>${data.total_seats}</span> seats</span>
+    </div>`;
+
+  const bars = document.createElement("div");
+  bars.className = "seat-bars";
+
+  const dist = data.quota_distribution || {};
+  const max  = Math.max(...Object.values(dist), 1);
+
+  Object.entries(dist).forEach(([quota, count]) => {
+    const pct = Math.round((count / max) * 100);
+    bars.innerHTML += `
+      <div class="seat-row">
+        <div class="seat-row-top">
+          <span class="seat-row-label">${quota}</span>
+          <span class="seat-row-count">${count} seats</span>
+        </div>
+        <div class="seat-bar-bg">
+          <div class="seat-bar-fill" style="width:0%" data-target="${pct}%"></div>
+        </div>
+      </div>`;
+  });
+
+  card.appendChild(bars);
+
+  // Animate bars after DOM insert
+  requestAnimationFrame(() => {
+    card.querySelectorAll(".seat-bar-fill").forEach(el => {
+      el.style.width = el.dataset.target;
+    });
+  });
+
+  return card;
+}
+
+/* ── Rich card: counselling info ── */
+function buildCounsellingCard(data, message) {
+  const card = document.createElement("div");
+  card.className = "csl-card";
+
+  const title = data?.title || "Counselling Info";
+
+  // Icon mapping per subtopic
+  const icons = {
+    overview: "📋", registration: "📝", round1: "🔵", round2: "🟢",
+    round3: "🟡", round4: "🟠", round5: "🔴",
+    freeze_float: "🔒", refund: "💰", documents: "📄"
+  };
+  const subtopic = data?.subtopic || "overview";
+  const icon = icons[subtopic] || "📋";
+
+  card.innerHTML = `
+    <div class="csl-hdr">
+      <span class="csl-hdr-icon">${icon}</span>
+      <span class="csl-hdr-title">${title}</span>
+    </div>
+    <div class="csl-body">${message.replace(/\n/g, "<br>")}</div>`;
+
+  return card;
+}
+
+/* ── Render a full bot response ──────────────── */
+function renderBotResponse(data) {
+  const type    = data.type || "unknown";
+  const message = data.message || "I'm here to help.";
+
+  // Streaming responses get typewriter effect (no card)
+  if (type === "stream") {
+    renderStreamResponse(data);
+    return;
+  }
+
+  const col = addBubble(message, "bot");
+
+  // Attach rich card depending on response type
+  if (type === "prediction" && data.data && data.data.branches) {
+    const card = buildPredictionCard(data.data);
+    col.insertBefore(card, col.querySelector(".ts"));
+  }
+
+  if (type === "seats" && data.data && data.data.branch) {
+    const card = buildSeatCard(data.data);
+    if (card) col.insertBefore(card, col.querySelector(".ts"));
+  }
+
+  if (type === "info") {
+    const card = document.createElement("div");
+    card.className = "info-card";
+    card.innerHTML = message.replace(/\n/g, "<br>");
+    col.querySelector(".bbl").style.display = "none";
+    col.insertBefore(card, col.querySelector(".ts"));
+  }
+
+  if (type === "error") {
+    const card = document.createElement("div");
+    card.className = "err-card";
+    card.textContent = message;
+    col.querySelector(".bbl").style.display = "none";
+    col.insertBefore(card, col.querySelector(".ts"));
+  }
+
+  renderChips(data);
+  scrollBottom();
+}
+
+function showDefaultChips() {
+  const chipsEl = $("chips");
+  chipsEl.innerHTML = "";
+  DEFAULT_ACTIONS.forEach((a, i) => {
+    const c = document.createElement("div");
+    c.className = "chip action";
+    c.textContent = a.label;
+    c.style.animationDelay = `${i * 55}ms`;
+    c.onclick = () => sendMsg(a.value);
+    chipsEl.appendChild(c);
+  });
+}
+
+/* ── Render chips helper ─────────────────────── */
+function renderChips(data) {
+  const chipsEl = $("chips");
+  chipsEl.innerHTML = "";
+
+  const actions     = data.actions || [];
+  const suggestions = data.suggestions || [];
+
+  actions.forEach((a, i) => {
+    const c = document.createElement("div");
+    c.className = "chip action";
+    c.textContent = a.label;
+    c.style.animationDelay = `${i * 55}ms`;
+    c.onclick = () => sendMsg(a.value || a.label);
+    chipsEl.appendChild(c);
+  });
+
+  suggestions.forEach((s, i) => {
+    const c = document.createElement("div");
+    c.className = "chip suggest";
+    c.textContent = s;
+    c.style.animationDelay = `${(actions.length + i) * 55}ms`;
+    c.onclick = () => sendMsg(s);
+    chipsEl.appendChild(c);
+  });
+
+  if (actions.length === 0 && suggestions.length === 0) {
+    showDefaultChips();
+  }
+}
+
+/* ── Streaming typewriter for counselling replies ── */
+async function renderStreamResponse(data) {
+  const message = data.message || "";
+
+  // Create the bubble structure with empty content
+  const m = $("msgs");
+  const row = document.createElement("div");
+  row.className = "row bot";
+  row.style.opacity = "1";
+  row.style.transform = "translateY(0)";
+
+  const av = document.createElement("div");
+  av.className = "av bot";
+  av.textContent = "🎓";
+
+  const col = document.createElement("div");
+  col.className = "col";
+
+  const bbl = document.createElement("div");
+  bbl.className = "bbl bot";
+  bbl.innerHTML = "";
+
+  const ts = document.createElement("div");
+  ts.className = "ts";
+  ts.textContent = now();
+
+  col.appendChild(bbl);
+  col.appendChild(ts);
+  row.appendChild(av);
+  row.appendChild(col);
+  m.appendChild(row);
+  scrollBottom();
+
+  // Stream characters with typewriter effect
+  const CHARS_PER_TICK = 3;
+  const TICK_MS = 12;
+  let i = 0;
+  let htmlBuf = "";
+
+  await new Promise(resolve => {
+    const timer = setInterval(() => {
+      const end = Math.min(i + CHARS_PER_TICK, message.length);
+      for (; i < end; i++) {
+        const ch = message[i];
+        if (ch === "\n") {
+          htmlBuf += "<br>";
+        } else {
+          htmlBuf += ch;
+        }
+      }
+      bbl.innerHTML = htmlBuf;
+      scrollBottom();
+
+      if (i >= message.length) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, TICK_MS);
+  });
+
+  // Show chips after stream finishes
+  renderChips(data);
+  scrollBottom();
+
+  $("send").disabled = false;
+  $("inp").focus();
+}
+
+/* ── Send message ─────────────────────────────── */
+async function sendMsg(override = null) {
+  const inp  = $("inp");
+  const text = override || inp.value.trim();
+  if (!text) return;
+
+  $("chips").innerHTML = "";
+  inp.value = "";
+  $("send").disabled = true;
+
+  addBubble(text, "user");
+
+  // Typing indicator
+  const t = $("typing");
+  t.classList.add("on");
+  scrollBottom();
+
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 500));
+
+  try {
+    const res = await fetch(`${API_BASE}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, user_message: text }),
+    });
+
+    const data = await res.json();
+    t.classList.remove("on");
+
+    // For stream type, renderStreamResponse handles re-enabling send
+    if (data.type === "stream") {
+      renderBotResponse(data);
+      return;
+    }
+
+    renderBotResponse(data);
+
+  } catch (err) {
+    t.classList.remove("on");
+    renderBotResponse({
+      type: "error",
+      message: "Connection failed. Please check the server and try again.",
+      actions: [],
+      suggestions: [],
+    });
+  }
+
+  $("send").disabled = false;
+  inp.focus();
+}
+
+/* ── UI controls ─────────────────────────────── */
+function clearChat() {
+  const m = $("msgs");
+  m.innerHTML = "";
+  addWelcome();
+  showDefaultChips();
+}
+
+let minimized = false;
+function toggleMin() {
+  minimized = !minimized;
+  ["msgs","typing","chips","inp-area"].forEach(id => {
+    $(id).style.display = minimized ? "none" : "";
+  });
+}
+
+function addWelcome() {
+  const m = $("msgs");
+  const w = document.createElement("div");
+  w.className = "welcome";
+  w.innerHTML = `
+    <h4>Welcome 👋</h4>
+    <p>Tell me your JEE Main <strong>CRL (Common Rank List)</strong> rank, category, and quota — I'll predict which branches you're likely to get, show seat distribution, and help you understand the counselling process.</p>
+    <p style="margin-top:6px;font-size:.72rem;color:#f09040">⚠️ Please enter your CRL rank, not your category rank.</p>`;
+  m.appendChild(w);
+}
+
+/* ── Init ─────────────────────────────────────── */
+$("inp").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  addWelcome();
+  setTimeout(() => {
+    renderBotResponse({
+      type: "question",
+      message: "Hello! I'm your university counselling assistant.\n\nTo get started, please share your JEE Main CRL (Common Rank List) rank, category (e.g. OPEN, BC, SC), and quota (Home State or All India).",
+      actions: DEFAULT_ACTIONS,
+      suggestions: [],
+    });
+  }, 650);
+});
+</script>
+</body>
+</html>
