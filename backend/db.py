@@ -5,6 +5,7 @@ import os
 import json
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv()
 
 
 # ─────────────────────────────────────────────
@@ -47,6 +48,15 @@ def _get_pool():
             **_get_db_config(),
         )
     return _pool
+_pool = pool.SimpleConnectionPool(
+    minconn=2,
+    maxconn=int(os.getenv("DB_MAX_CONNECTIONS", "10")),
+    dbname=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    host=os.getenv("DB_HOST"),
+    port=os.getenv("DB_PORT", "5432"),
+)
 
 
 def get_connection():
@@ -55,11 +65,13 @@ def get_connection():
     Caller MUST return it via return_connection() or use execute_query/execute_non_query.
     """
     return _get_pool().getconn()
+    return _pool.getconn()
 
 
 def return_connection(conn):
     """Return a connection back to the pool."""
     _get_pool().putconn(conn)
+    _pool.putconn(conn)
 
 
 def execute_query(query, params=None):
@@ -145,3 +157,4 @@ def delete_memory(user_id: str):
         "DELETE FROM conversation_memory WHERE user_id = %s;",
         (user_id,),
     )
+    
