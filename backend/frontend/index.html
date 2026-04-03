@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>University Counselling Assistant</title>
+<title>University Admission Assistant</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -135,9 +135,9 @@ body::before{
   color:var(--text);
   border-bottom-left-radius:3px;
 }
-.bbl.usr{
-  background:linear-gradient(135deg,var(--gold),#a87428);
-  color:#1a0e00;font-weight:500;
+.bbl.user{
+  background:linear-gradient(135deg,var(--gold),#00b3ff);
+  color:var(--text);font-weight:500;
   border-bottom-right-radius:3px;
 }
 .ts{font-size:.62rem;color:var(--muted);opacity:.6;margin-top:3px;padding:0 4px}
@@ -334,7 +334,7 @@ body::before{
   <div id="hdr">
     <div class="hdr-avatar">🎓</div>
     <div class="hdr-info">
-      <h3>Counselling Assistant</h3>
+      <h3>Admission Assistant</h3>
       <div class="hdr-sub"><div class="hdr-dot"></div>Available now</div>
     </div>
     <div class="hdr-btns">
@@ -365,14 +365,29 @@ body::before{
 
 </div>
 
+<script src="./config.js"></script>
 <script>
 /* ── State ────────────────────────────────────── */
 const userId = "student_" + Math.floor(Math.random() * 100000);
 
-// API base: use current origin when deployed, localhost for dev
-const API_BASE = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
-  ? "http://127.0.0.1:8000"
-  : window.location.origin;
+// API base:
+// - local dev: localhost -> local FastAPI
+// - Vercel/Railway: set window.APP_CONFIG.API_BASE in config.js
+// - same-origin fallback still works if frontend and backend share one domain
+function getApiBase() {
+  const configured = (window.APP_CONFIG?.API_BASE || "").trim();
+  if (configured) {
+    return configured.replace(/\/+$/, "");
+  }
+
+  if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+    return "http://127.0.0.1:8000";
+  }
+
+  return window.location.origin;
+}
+
+const API_BASE = getApiBase();
 
 const DEFAULT_ACTIONS = [
   { label: "📊 Predict My Branch",    value: "I want to predict my branch" },
@@ -784,7 +799,7 @@ function addWelcome() {
   w.className = "welcome";
   w.innerHTML = `
     <h4>Welcome 👋</h4>
-    <p>Tell me your JEE Main <strong>CRL (Common Rank List)</strong> rank, category, and quota — I'll predict which branches you're likely to get, show seat distribution, and help you understand the counselling process.</p>
+    <p>Tell me your JEE Main <strong>CRL (Common Rank List)</strong> rank, category, and quota — I'll predict which branches you're likely to get, show seat distribution, and help you understand the admission process.</p>
     <p style="margin-top:6px;font-size:.72rem;color:#f09040">⚠️ Please enter your CRL rank, not your category rank.</p>`;
   m.appendChild(w);
 }
@@ -799,7 +814,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
     renderBotResponse({
       type: "question",
-      message: "Hello! I'm your university counselling assistant.\n\nTo get started, please share your JEE Main CRL (Common Rank List) rank, category (e.g. OPEN, BC, SC), and quota (Home State or All India).",
+      message: "Hello! I'm your university admission assistant.\n\nTo get started, please share your JEE Main CRL (Common Rank List) rank, category (e.g. OPEN, BC, SC), and quota (Home State or All India).",
       actions: DEFAULT_ACTIONS,
       suggestions: [],
     });

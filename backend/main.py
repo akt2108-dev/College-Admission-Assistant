@@ -1071,6 +1071,24 @@ async def global_exception_handler(request: Request, exc: Exception):
         )
     )
 
+
+@app.get("/health")
+def health_check():
+    try:
+        execute_query("SELECT 1 AS ok;")
+        return {
+            "status": "ok",
+            "database": "connected",
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "database": "unavailable",
+            },
+        )
+
 # Conversation memory is now DB-backed (see db.py)
 # EMPTY_MEMORY returns a fresh dict for new users.
 EMPTY_MEMORY = lambda: {
