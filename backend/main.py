@@ -4,9 +4,15 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from collections import defaultdict
 from db import execute_query, load_memory, save_memory, delete_memory
+from mba_knowledge import detect_mba_intent, get_mba_response
+from ai_brain import ai_brain_response
 from utils import build_category
+import logging
 import os
 import re
+import time
+
+logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
@@ -266,6 +272,30 @@ def detect_intent(user_message: str) -> str:
     if scores[best_intent] == 0:
         return "unknown"
     return best_intent
+
+
+def is_prediction_followup(
+    user_message: str,
+    extracted_rank: int | None,
+    category_info: dict,
+    extracted_quota: str | None,
+) -> bool:
+    """
+    Decide whether an ambiguous message should continue prediction flow.
+    This prevents generic chatter from hijacking into rank/category prompts.
+    """
+    if extracted_rank or category_info.get("base_category") or extracted_quota:
+        return True
+
+    message = user_message.lower().strip()
+    if message in {"1", "2", "home state", "all india", "hs", "ai"}:
+        return True
+
+    prediction_keywords = [
+        "predict", "prediction", "rank", "quota", "category",
+        "chance", "chances", "branch", "option", "options"
+    ]
+    return any(k in message for k in prediction_keywords)
 
 
 def detect_counselling_subtopic(user_message: str) -> str:
@@ -1045,18 +1075,18 @@ def format_seat_response(seat_data: dict | None) -> str:
 
 app = FastAPI()
 
-# CORS: use ALLOWED_ORIGINS env var (comma-separated) in production,
-# falls back to ["*"] for local dev.
-_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
-_allowed_origins = (
-    [o.strip() for o in _origins_env.split(",") if o.strip()]
-    if _origins_env != "*" else ["*"]
-)
+# CORS: use ALLOWED_ORIGINS env var (comma-separated) in production.
+# Local default is explicit localhost origins to avoid wildcard+credentials issues.
+_origins_env = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5500,http://localhost:3000")
+_allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
+if not _allowed_origins:
+    _allowed_origins = ["http://127.0.0.1:5500", "http://localhost:3000"]
+_allow_credentials = "*" not in _allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
-    allow_credentials=True,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -1105,6 +1135,91 @@ EMPTY_MEMORY = lambda: {
 }
 
 # ── Input limits ──────────────────────────────────
+_memory_fallback_store: dict[str, dict] = {}
+_memory_db_retry_after = 0.0
+_MEMORY_DB_RETRY_SECONDS = int(os.getenv("MEMORY_DB_RETRY_SECONDS", "30"))
+
+
+def _memory_db_attempt_allowed() -> bool:
+    return time.time() >= _memory_db_retry_after
+
+
+def _mark_memory_db_unavailable() -> None:
+    global _memory_db_retry_after
+    _memory_db_retry_after = time.time() + _MEMORY_DB_RETRY_SECONDS
+
+
+def _mark_memory_db_available() -> None:
+    global _memory_db_retry_after
+    _memory_db_retry_after = 0.0
+
+
+def _normalize_memory(memory: dict | None) -> dict:
+    normalized = EMPTY_MEMORY()
+    if isinstance(memory, dict):
+        for key in normalized:
+            if key in memory:
+                normalized[key] = memory[key]
+    return normalized
+
+
+def _load_chat_memory(user_id: str) -> dict:
+    if not _memory_db_attempt_allowed():
+        return _normalize_memory(_memory_fallback_store.get(user_id))
+    try:
+        memory = _normalize_memory(load_memory(user_id, EMPTY_MEMORY))
+        _mark_memory_db_available()
+        return memory
+    except Exception as exc:
+        _mark_memory_db_unavailable()
+        logger.warning(
+            "DB memory load failed for user_id=%s. Falling back to in-process memory. Error: %s",
+            user_id,
+            exc,
+        )
+        return _normalize_memory(_memory_fallback_store.get(user_id))
+
+
+def _save_chat_memory(user_id: str, memory: dict) -> None:
+    normalized = _normalize_memory(memory)
+    _memory_fallback_store[user_id] = normalized.copy()
+    if not _memory_db_attempt_allowed():
+        return
+    try:
+        save_memory(user_id, normalized)
+        _mark_memory_db_available()
+    except Exception as exc:
+        _mark_memory_db_unavailable()
+        logger.warning(
+            "DB memory save failed for user_id=%s. Keeping in-process memory only. Error: %s",
+            user_id,
+            exc,
+        )
+
+
+def _delete_chat_memory(user_id: str) -> None:
+    _memory_fallback_store.pop(user_id, None)
+    if not _memory_db_attempt_allowed():
+        return
+    try:
+        delete_memory(user_id)
+        _mark_memory_db_available()
+    except Exception as exc:
+        _mark_memory_db_unavailable()
+        logger.warning(
+            "DB memory delete failed for user_id=%s. Cleared in-process memory only. Error: %s",
+            user_id,
+            exc,
+        )
+
+
+def _db_unavailable_response() -> dict:
+    return build_ui_response(
+        response_type="error",
+        message="Database is temporarily unavailable. Please try again in a moment.",
+    )
+
+
 MAX_USER_ID_LEN = 64
 MAX_MESSAGE_LEN = 500
 
@@ -1126,11 +1241,15 @@ class PredictionRequest(BaseModel):
 
 @app.post("/predict")
 def predict_branch(data: PredictionRequest):
-    full_category, grouped_results = run_prediction(
-        data.rank, data.base_category,
-        data.girl, data.ph, data.af, data.ff, data.tf,
-        data.quota
-    )
+    try:
+        full_category, grouped_results = run_prediction(
+            data.rank, data.base_category,
+            data.girl, data.ph, data.af, data.ff, data.tf,
+            data.quota
+        )
+    except Exception as exc:
+        logger.warning("Prediction query failed. Error: %s", exc)
+        return _db_unavailable_response()
     return build_ui_response(
         response_type="prediction",
         message=format_chatbot_response(data.rank, full_category, data.quota, grouped_results),
@@ -1148,7 +1267,11 @@ def predict_branch(data: PredictionRequest):
 
 @app.get("/seats")
 def get_seats(branch: str, year: int):
-    seat_data = run_seat_lookup(branch.upper(), year)
+    try:
+        seat_data = run_seat_lookup(branch.upper(), year)
+    except Exception as exc:
+        logger.warning("Seat lookup failed for branch=%s, year=%s. Error: %s", branch, year, exc)
+        return _db_unavailable_response()
     if not seat_data:
         return build_ui_response(
             response_type="error",
@@ -1186,7 +1309,7 @@ def chat(
         )
 
     # Load memory from DB (persists across restarts)
-    memory = load_memory(user_id, EMPTY_MEMORY)
+    memory = _load_chat_memory(user_id)
 
     # ── Step 1: extract everything from the message ──────────────────────────
 
@@ -1195,7 +1318,29 @@ def chat(
     extracted_quota    = extract_quota(user_message)
     extracted_branches = extract_branches(user_message)
     extracted_year     = extract_year(user_message)
-    intent             = detect_intent(user_message)
+    intent = detect_intent(user_message)
+
+# ── MBA intent check (runs before all B.Tech routing) ────────────────────
+    mba_intent, mba_confidence = detect_mba_intent(user_message)
+    if mba_intent and mba_confidence > 0.3:
+        return build_ui_response(
+            response_type="stream",
+            message=get_mba_response(mba_intent),
+            data={"subtopic": mba_intent, "title": "MBA Admission — HBTU"},
+            actions=[
+                {"label": "MBA Eligibility",    "value": "What is MBA eligibility?"},
+                {"label": "MBA Fees",           "value": "What are MBA fees?"},
+                {"label": "MBA Rounds",         "value": "Explain MBA counselling rounds"},
+                {"label": "MBA Seats",          "value": "Show MBA seat matrix"},
+                {"label": "MBA Reservation",    "value": "What is MBA reservation policy?"},
+                {"label": "MBA Documents",      "value": "What documents are needed for MBA?"},
+            ],
+            suggestions=[
+                "What is the MBA registration fee?",
+                "When is the MBA Round 1 result?",
+                "What is GD/PI weightage?",
+            ],
+        )
 
     # ── Step 2: handle numbered shortcut ONLY when we are waiting for quota ──
     # FIX: quota shortcut was running unconditionally and being overwritten.
@@ -1225,7 +1370,7 @@ def chat(
         memory["awaiting"] = None   # quota received, clear the wait flag
 
     # Persist updated memory to DB
-    save_memory(user_id, memory)
+    _save_chat_memory(user_id, memory)
 
     # ── Step 4: run prediction when all three required fields are present ─────
 
@@ -1239,11 +1384,19 @@ def chat(
         quota         = memory["quota"]
 
         # Reset for next conversation (clear from DB)
-        delete_memory(user_id)
+        _delete_chat_memory(user_id)
 
-        full_category, grouped_results = run_prediction(
-            rank, base_category, girl, ph, af, ff, tf, quota
-        )
+        try:
+            full_category, grouped_results = run_prediction(
+                rank, base_category, girl, ph, af, ff, tf, quota
+            )
+        except Exception as exc:
+            logger.warning(
+                "Prediction query failed in chat flow for user_id=%s. Error: %s",
+                user_id,
+                exc,
+            )
+            return _db_unavailable_response()
 
         return build_ui_response(
             response_type="prediction",
@@ -1270,7 +1423,7 @@ def chat(
 
     if memory["rank"] and memory["base_category"] and not memory["quota"]:
         memory["awaiting"] = "quota"
-        save_memory(user_id, memory)
+        _save_chat_memory(user_id, memory)
         return build_ui_response(
             response_type="question",
             message=(
@@ -1296,9 +1449,24 @@ def chat(
     if intent == "unknown" and extracted_branches:
         intent = "seats"
 
-    non_prediction_intents = {"counselling_info", "seats", "fees"}
+    # Continue prediction flow on follow-up messages even when the latest
+    # message has no explicit prediction keywords (e.g. user replies "40000").
+    prediction_in_progress = any([
+        memory.get("rank"),
+        memory.get("base_category"),
+        memory.get("quota"),
+        memory.get("awaiting") == "quota",
+    ])
+    if (
+        intent == "unknown"
+        and prediction_in_progress
+        and is_prediction_followup(
+            user_message, extracted_rank, category_info, extracted_quota
+        )
+    ):
+        intent = "predict"
 
-    if intent not in non_prediction_intents:
+    if intent == "predict":  # ← ONLY prompt for rank when user explicitly wants prediction
 
         if memory["rank"] and not memory["base_category"]:
             return build_ui_response(
@@ -1316,7 +1484,10 @@ def chat(
         if not memory["rank"]:
             return build_ui_response(
                 response_type="question",
-                message="Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n⚠️ Note: Please enter your CRL rank, not your category rank.",
+                message=(
+                    "Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n"
+                    "⚠️ Note: Please enter your CRL rank, not your category rank."
+                ),
             )
 
     # ── Step 6: intent-specific flows ─────────────────────────────────────────
@@ -1355,7 +1526,16 @@ def chat(
     elif intent == "seats":
         if extracted_branches:
             year = extracted_year or 2025   # default to 2025 if not specified
-            seat_data = run_seat_lookup(extracted_branches[0], year)
+            try:
+                seat_data = run_seat_lookup(extracted_branches[0], year)
+            except Exception as exc:
+                logger.warning(
+                    "Seat lookup failed in chat flow for branch=%s, year=%s. Error: %s",
+                    extracted_branches[0],
+                    year,
+                    exc,
+                )
+                return _db_unavailable_response()
             return build_ui_response(
                 response_type="seats",
                 message=format_seat_response(seat_data),
@@ -1396,19 +1576,28 @@ def chat(
 
     # ── Fallback ──────────────────────────────────────────────────────────────
 
+    # ── AI Brain fallback — handles greetings, ambiguous, out-of-scope ────────
+    # Build a lightweight history list from memory for context
+    conversation_history = []  # extend this later if you persist chat history in DB
+
+    user_context = {
+        k: memory[k] for k in ("rank", "base_category", "quota")
+        if memory.get(k)
+    }
+
+    ai_reply = ai_brain_response(
+        user_message=user_message,
+        conversation_history=conversation_history,
+        user_context=user_context,
+    )
+
     return build_ui_response(
-        response_type="unknown",
-        message=(
-            "I'm the HBTU Counselling Assistant — I can help you with:\n\n"
-            "📊 **Branch Prediction** — Tell me your JEE Main CRL rank, category & quota "
-            "and I'll predict which branches you're likely to get.\n"
-            "💺 **Seat Distribution** — Ask about the seat matrix for any branch.\n"
-            "📋 **Counselling Process** — Rounds, FREEZE/FLOAT, documents, refund & more.\n\n"
-            "Try one of the options below or type your question!"
-        ),
+        response_type="stream",
+        message=ai_reply,
         actions=[
             {"label": "🎯 Predict My Branch",   "value": "I want to predict my branch"},
             {"label": "💺 Seat Distribution",   "value": "Show seat distribution"},
-            {"label": "📋 Counselling Process", "value": "Explain the counselling process"},
+            {"label": "📋 B.Tech Counselling",  "value": "Explain the counselling process"},
+            {"label": "🎓 MBA Admission",       "value": "Tell me about MBA admission at HBTU"},
         ],
     )

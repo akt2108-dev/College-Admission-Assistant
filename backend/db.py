@@ -3,6 +3,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2 import pool
 import os
 import json
+from threading import Lock
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -12,6 +13,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 # ─────────────────────────────────────────────
 
 _pool = None
+_pool_lock = Lock()
 
 
 def _get_db_config():
@@ -35,17 +37,26 @@ def _get_db_config():
     if sslmode:
         config["sslmode"] = sslmode
 
+    connect_timeout = os.getenv("DB_CONNECT_TIMEOUT", "5").strip()
+    if connect_timeout:
+        try:
+            config["connect_timeout"] = int(connect_timeout)
+        except ValueError:
+            raise RuntimeError("DB_CONNECT_TIMEOUT must be an integer (seconds).")
+
     return config
 
 
 def _get_pool():
     global _pool
     if _pool is None:
-        _pool = pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=int(os.getenv("DB_MAX_CONNECTIONS", "10")),
-            **_get_db_config(),
-        )
+        with _pool_lock:
+            if _pool is None:
+                _pool = pool.ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=int(os.getenv("DB_MAX_CONNECTIONS", "10")),
+                    **_get_db_config(),
+                )
     return _pool
 
 
@@ -72,6 +83,9 @@ def execute_query(query, params=None):
             cursor.execute(query, params)
             results = cursor.fetchall()
             return results
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         return_connection(conn)
 
@@ -85,6 +99,9 @@ def execute_non_query(query, params=None):
         with conn.cursor() as cursor:
             cursor.execute(query, params)
             conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         return_connection(conn)
 
@@ -102,14 +119,18 @@ CREATE TABLE IF NOT EXISTS conversation_memory (
 """
 
 _table_ensured = False
+_table_ensure_lock = Lock()
 
 def _ensure_memory_table():
     """Create the conversation_memory table if it doesn't exist (runs once)."""
     global _table_ensured
     if _table_ensured:
         return
-    execute_non_query(_ENSURE_TABLE_SQL)
-    _table_ensured = True
+    with _table_ensure_lock:
+        if _table_ensured:
+            return
+        execute_non_query(_ENSURE_TABLE_SQL)
+        _table_ensured = True
 
 
 def load_memory(user_id: str, default_factory):

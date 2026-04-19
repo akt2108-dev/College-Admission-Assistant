@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
-<title>University Admission Assistant</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"/>
+<title>HBTUMitr</title>
+<link rel="icon" type="image/png" href="./images/hbtumitr-logo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 /* ── Reset & tokens ───────────────────────────── */
@@ -81,12 +81,20 @@ body::before{
 }
 
 .hdr-avatar{
-  width:40px;height:40px;border-radius:50%;
-  background:linear-gradient(135deg,var(--gold),#6b4f1a);
+  width:46px;height:46px;border-radius:10px;
+  background:rgba(255,255,255,.95);
+  border:1px solid var(--border-gold);
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
+  flex-shrink:0;
+  overflow:hidden;
   box-shadow:0 0 0 3px var(--gold-dim);
   animation:pulse 3s ease-in-out infinite;
+}
+.hdr-avatar::before{
+  content:"";
+  width:100%;
+  height:100%;
+  background:url("./images/hbtumitr-logo.png") center/contain no-repeat;
 }
 @keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--gold-dim)}50%{box-shadow:0 0 0 7px rgba(212,170,80,.04)}}
 
@@ -115,11 +123,24 @@ body::before{
 #msgs::-webkit-scrollbar-thumb{background:rgba(212,170,80,.15);border-radius:3px}
 
 .row{display:flex;align-items:flex-end;gap:8px;animation:pop .3s cubic-bezier(.16,1,.3,1) forwards;opacity:0;transform:translateY(10px)}
-.row.user{flex-direction:row-reverse}
+.row.user{flex-direction:row-reverse;align-items:flex-start}
+.row.bot{align-items:flex-start}
 @keyframes pop{to{opacity:1;transform:translateY(0)}}
 
-.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-bottom:2px}
-.av.bot{background:linear-gradient(135deg,var(--gold),#4a3010)}
+.av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-bottom:2px}
+.row.user .av{margin-bottom:0;margin-top:2px}
+.row.bot .av{margin-bottom:0;margin-top:2px}
+.av.bot{
+  background:rgba(255,255,255,.95);
+  border:1px solid var(--border-gold);
+  overflow:hidden;
+}
+.av.bot::before{
+  content:"";
+  width:100%;
+  height:100%;
+  background:url("./images/hbtumitr-logo.png") center/contain no-repeat;
+}
 .av.usr{background:linear-gradient(135deg,#2a5080,#0e1e30);font-size:11px}
 
 .col{display:flex;flex-direction:column;max-width:82%}
@@ -131,14 +152,15 @@ body::before{
   word-break:break-word;
 }
 .bbl.bot{
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--border);
+  background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.14);
   color:var(--text);
   border-bottom-left-radius:3px;
 }
 .bbl.user{
-  background:linear-gradient(135deg,var(--gold),#00b3ff);
-  color:var(--text);font-weight:500;
+  background:linear-gradient(135deg,#d4aa50,#b9832d);
+  color:#1a1205;font-weight:600;
+  border:1px solid rgba(212,170,80,.45);
   border-bottom-right-radius:3px;
 }
 .ts{font-size:.62rem;color:var(--muted);opacity:.6;margin-top:3px;padding:0 4px}
@@ -333,9 +355,9 @@ body::before{
 
   <!-- Header -->
   <div id="hdr">
-    <div class="hdr-avatar">🎓</div>
+    <div class="hdr-avatar"></div>
     <div class="hdr-info">
-      <h3>Admission Assistant</h3>
+      <h3>HBTUMitr (AI Assistant)</h3>
       <div class="hdr-sub"><div class="hdr-dot"></div>Available now</div>
     </div>
     <div class="hdr-btns">
@@ -349,7 +371,7 @@ body::before{
 
   <!-- Typing indicator -->
   <div id="typing">
-    <div class="av bot">🎓</div>
+    <div class="av bot"></div>
     <div class="tbl"><div class="td"></div><div class="td"></div><div class="td"></div></div>
   </div>
 
@@ -403,6 +425,19 @@ function now() {
 
 function $(id) { return document.getElementById(id); }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeMultilineHtml(value) {
+  return escapeHtml(value).replace(/\n/g, "<br>");
+}
+
 function scrollBottom() {
   const m = $("msgs");
   m.scrollTop = m.scrollHeight;
@@ -416,14 +451,14 @@ function addBubble(html, side) {
 
   const av = document.createElement("div");
   av.className = `av ${side === "bot" ? "bot" : "usr"}`;
-  av.textContent = side === "bot" ? "🎓" : "👤";
+  av.textContent = side === "bot" ? "" : "👤";
 
   const col = document.createElement("div");
   col.className = "col";
 
   const bbl = document.createElement("div");
   bbl.className = `bbl ${side}`;
-  bbl.innerHTML = html.replace(/\n/g, "<br>");
+  bbl.innerHTML = safeMultilineHtml(html);
 
   const ts = document.createElement("div");
   ts.className = "ts";
@@ -466,11 +501,20 @@ function buildPredictionCard(data) {
   ];
 
   fields.forEach(([label, val]) => {
-    meta.innerHTML += `
-      <div class="pred-meta-item">
-        <span class="pred-meta-label">${label}</span>
-        <span class="pred-meta-val">${val}</span>
-      </div>`;
+    const item = document.createElement("div");
+    item.className = "pred-meta-item";
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "pred-meta-label";
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement("span");
+    valueEl.className = "pred-meta-val";
+    valueEl.textContent = String(val ?? "");
+
+    item.appendChild(labelEl);
+    item.appendChild(valueEl);
+    meta.appendChild(item);
   });
 
   card.appendChild(meta);
@@ -506,6 +550,10 @@ function buildSeatCard(data) {
   if (!data || !data.branch) return null;
   const card = document.createElement("div");
   card.className = "seat-card";
+  const safeBranch = escapeHtml(data.branch);
+  const safeYear = escapeHtml(data.year);
+  const safeTotalSeats = escapeHtml(data.total_seats);
+  data = { ...data, branch: safeBranch, year: safeYear, total_seats: safeTotalSeats };
 
   card.innerHTML = `
     <div class="seat-header">
@@ -517,20 +565,26 @@ function buildSeatCard(data) {
   bars.className = "seat-bars";
 
   const dist = data.quota_distribution || {};
-  const max  = Math.max(...Object.values(dist), 1);
+  const numericCounts = Object.values(dist)
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  const max = numericCounts.length ? Math.max(...numericCounts, 1) : 1;
 
   Object.entries(dist).forEach(([quota, count]) => {
-    const pct = Math.round((count / max) * 100);
-    bars.innerHTML += `
+    const safeQuota = escapeHtml(quota);
+    const numericCount = Number(count);
+    const safeCount = Number.isFinite(numericCount) ? numericCount : 0;
+    const pct = Math.max(0, Math.min(100, Math.round((safeCount / max) * 100)));
+    bars.insertAdjacentHTML("beforeend", `
       <div class="seat-row">
         <div class="seat-row-top">
-          <span class="seat-row-label">${quota}</span>
-          <span class="seat-row-count">${count} seats</span>
+          <span class="seat-row-label">${safeQuota}</span>
+          <span class="seat-row-count">${safeCount} seats</span>
         </div>
         <div class="seat-bar-bg">
           <div class="seat-bar-fill" style="width:0%" data-target="${pct}%"></div>
         </div>
-      </div>`;
+      </div>`);
   });
 
   card.appendChild(bars);
@@ -559,14 +613,16 @@ function buildCounsellingCard(data, message) {
     freeze_float: "🔒", refund: "💰", documents: "📄"
   };
   const subtopic = data?.subtopic || "overview";
+  const safeTitle = escapeHtml(title);
+  const safeMessage = safeMultilineHtml(message);
   const icon = icons[subtopic] || "📋";
 
   card.innerHTML = `
     <div class="csl-hdr">
       <span class="csl-hdr-icon">${icon}</span>
-      <span class="csl-hdr-title">${title}</span>
+      <span class="csl-hdr-title">${safeTitle}</span>
     </div>
-    <div class="csl-body">${message.replace(/\n/g, "<br>")}</div>`;
+    <div class="csl-body">${safeMessage}</div>`;
 
   return card;
 }
@@ -598,7 +654,7 @@ function renderBotResponse(data) {
   if (type === "info") {
     const card = document.createElement("div");
     card.className = "info-card";
-    card.innerHTML = message.replace(/\n/g, "<br>");
+    card.innerHTML = safeMultilineHtml(message);
     col.querySelector(".bbl").style.display = "none";
     col.insertBefore(card, col.querySelector(".ts"));
   }
@@ -672,7 +728,6 @@ async function renderStreamResponse(data) {
 
   const av = document.createElement("div");
   av.className = "av bot";
-  av.textContent = "🎓";
 
   const col = document.createElement("div");
   col.className = "col";
@@ -799,9 +854,8 @@ function addWelcome() {
   const w = document.createElement("div");
   w.className = "welcome";
   w.innerHTML = `
-    <h4>Welcome 👋</h4>
-    <p>Tell me your JEE Main <strong>CRL (Common Rank List)</strong> rank, category, and quota — I'll predict which branches you're likely to get, show seat distribution, and help you understand the admission process.</p>
-    <p style="margin-top:6px;font-size:.72rem;color:#f09040">⚠️ Please enter your CRL rank, not your category rank.</p>`;
+    <h4>Namaste! I'm HBTUMitr. 🙏</h4>
+    <p>I'm here to simplify your HBTU admission process. Ask me about fees structure, seat info, or counselling steps!</p>`;
   m.appendChild(w);
 }
 
@@ -815,7 +869,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
     renderBotResponse({
       type: "question",
-      message: "Hello! I'm your university admission assistant.\n\nTo get started, please share your JEE Main CRL (Common Rank List) rank, category (e.g. OPEN, BC, SC), and quota (Home State or All India).",
+      message: "Namaste! I'm HBTUMitr. 🙏\n\nI'm here to simplify your HBTU admission process. Ask me about fees structure, seat info, or counselling steps!",
       actions: DEFAULT_ACTIONS,
       suggestions: [],
     });
@@ -831,3 +885,4 @@ window.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+

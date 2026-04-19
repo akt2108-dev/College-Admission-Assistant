@@ -1,70 +1,35 @@
-# ----------------------------
-# Secrets and environment files
-# ----------------------------
-.env
-.env.*
-!.env.example
 backend/.env
 backend/.env.*
 !backend/.env.example
 
-# ----------------------------
-# Python virtual environments
-# ----------------------------
-venv/
-.venv/
-env/
-backend/venv/
-backend/.venv/
-backend/env/
-
-# ----------------------------
-# Python cache and test artifacts
-# ----------------------------
+# Python cache and virtual environments
 __pycache__/
 *.py[cod]
-*$py.class
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
+.venv/
+venv/
+env/
+ENV/
 
-# ----------------------------
-# Build and packaging artifacts
-# ----------------------------
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
 build/
 dist/
 *.egg-info/
-.eggs/
-pip-wheel-metadata/
 
-# ----------------------------
-# Logs and runtime temp files
-# ----------------------------
+# Logs and temporary files
 *.log
-logs/
-tmp/
-temp/
-*.tmp
-
-# ----------------------------
-# OS / editor noise
-# ----------------------------
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# ----------------------------
-# Local binaries and drivers
-# ----------------------------
-chromedriver.exe
-chromedriver
-*.exe
-
-# ----------------------------
-# Local notebook/checkpoint noise
-# ----------------------------
-.ipynb_checkpoints/
+.coverage
+htmlcov/
+.tox/
+.nox/
