@@ -1,194 +1,320 @@
-# HBTU Counselling Assistant Chatbot — Project Report
+# HBTU Counselling Assistant Chatbot - Project Report
+
+## 1. Executive Summary
+
+The HBTU Counselling Assistant Chatbot is a web-based admission guidance system for Harcourt Butler Technical University (HBTU), Kanpur. The project combines:
+
+- Historical B.Tech ORCR data processing (2023-2025)
+- Seat matrix lookup for 2025
+- Rule-based intent routing for counselling support
+- Multi-turn branch prediction workflow (rank, category, quota)
+- An MBA admission knowledge module (2026-27)
+- An LLM fallback layer for conversational handling
+
+After reviewing the full repository, this report documents the current implementation as it exists in code, including runtime behavior, architecture, strengths, and limitations.
 
 ---
 
-## 1. Introduction
+## 2. Problem Statement
 
-The **HBTU Counselling Assistant Chatbot** is an intelligent, web-based conversational system designed to assist students navigating the B.Tech admission counselling process at **Harcourt Butler Technical University (HBTU), Kanpur**. Every year, thousands of JEE Main aspirants face uncertainty about which engineering branches they are eligible for, how counselling rounds work, seat availability, fee structures, and document requirements. This information is typically scattered across lengthy PDF brochures, official websites, and social media — making it difficult for students and parents to find timely, accurate answers.
+Students and parents often struggle to navigate admission counselling due to fragmented information across portals, brochures, and notices. This project addresses that problem by providing a single conversational interface for:
 
-This project addresses that gap by providing an interactive chatbot that can:
-- Predict branch allotment based on a student's JEE Main CRL (Common Rank List) rank, category, and quota.
-- Display seat distribution data for any branch and year.
-- Answer detailed questions about the counselling process, eligibility, reservation, fees, documents, and more — all through a natural, conversational interface.
-
-The system combines a data pipeline (web scraping + data cleaning) with a backend API and a polished single-page frontend to deliver a seamless user experience.
+- Branch prediction using historical cutoffs
+- Seat availability by branch and year
+- Counselling process explanations (rounds, fee, documents, freeze/float/withdraw)
+- MBA admission Q&A
 
 ---
 
-## 2. Objectives
-
-The primary objectives of this project are:
-
-1. **Simplify the counselling process** — Provide students with a single point of contact to understand all aspects of HBTU B.Tech admissions, eliminating the need to read through lengthy official brochures.
-
-2. **Enable data-driven branch prediction** — Use 3 years of historical ORCR (Opening & Closing Rank) data (2023, 2024, 2025) to predict branch allotment probability for a given rank, category, and quota combination.
-
-3. **Provide real-time seat information** — Display seat matrix data with quota-wise and category-wise breakdowns for all 13 engineering branches.
-
-4. **Answer counselling queries conversationally** — Handle questions about registration, choice filling, FREEZE/FLOAT/WITHDRAW options, round-wise procedures, internal sliding, refund policies, eligibility criteria, domicile requirements, category codes, reservation policies, medical standards, fee structures, and document checklists.
-
-5. **Deliver an accessible, modern UI** — Build a responsive, visually appealing chat interface with rich cards, action chips, suggestion chips, and a streaming typewriter effect for long responses.
-
-6. **Maintain conversation context** — Remember user inputs (rank, category, quota) across multiple messages using persistent database-backed memory, enabling a multi-turn conversational flow.
-
----
-
-## 3. Scope
+## 3. Scope and Coverage
 
 ### In Scope
-- **University coverage:** HBTU Kanpur — B.Tech programmes only.
-- **Data years:** Historical ORCR data from 2023, 2024, and 2025 counselling sessions.
-- **Branches covered:** All 13 B.Tech branches offered at HBTU — Computer Science & Engineering, Information Technology, Electronics Engineering, Electrical Engineering, Mechanical Engineering, Civil Engineering, Chemical Engineering, Food Technology, Plastic Technology, Paint Technology, Leather Technology, Oil Technology, and Bio Chemical Engineering.
-- **Categories supported:** OPEN, BC (OBC-NCL), SC, ST, EWS — with sub-categories including Girl, PH (PwD), Armed Forces (AF), Freedom Fighter (FF), and Tuition Fee Waiver (TFW).
-- **Quotas:** Home State (Uttar Pradesh) and All India.
-- **Counselling topics:** Eligibility, domicile, category codes, reservation, medical standards, fee structure, round-wise procedures (Rounds 1–5), FREEZE/FLOAT/WITHDRAW, internal sliding, spot round, refund policy, and document checklist.
-- **Prediction model:** Probability-based prediction using historical closing rank comparison across all available years.
+
+- HBTU admissions support via chat interface
+- B.Tech branch prediction and seat queries
+- B.Tech counselling guidance (brochure-based)
+- MBA admission guidance module
+- FastAPI backend + PostgreSQL integration
+- Single-page frontend UI in plain HTML/CSS/JS
 
 ### Out of Scope
-- Other universities or colleges beyond HBTU.
-- Post-graduate (M.Tech, MBA, MCA) admissions.
-- Real-time integration with the official HBTU admissions portal.
-- AI/LLM-based natural language understanding (the system uses rule-based NLP with score-based intent detection).
-- Mobile application (native Android/iOS) — the current frontend is web-only.
+
+- Real-time integration with official counselling portal APIs
+- Automated fee/date synchronization from official websites
+- Native mobile apps
+- User authentication and role-based access
 
 ---
 
-## 4. Tech-Stack Used
+## 4. Repository Review Summary
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| **Python 3.11+** | Primary programming language |
-| **FastAPI** | High-performance async web framework for REST APIs |
-| **Pydantic** | Request/response validation and data modelling |
-| **Uvicorn** | ASGI server for running the FastAPI application |
-| **psycopg2-binary** | PostgreSQL database adapter for Python |
-| **python-dotenv** | Environment variable management via `.env` files |
+### Core Backend Files
 
-### Database
-| Technology | Purpose |
-|---|---|
-| **PostgreSQL** | Relational database storing cutoff data, seat matrices, and conversation memory |
-| **psycopg2 Connection Pooling** | Efficient connection reuse across concurrent requests |
+- backend/main.py
+  - Main FastAPI app
+  - Intent routing
+  - Prediction, seats, counselling, MBA, and AI fallback flows
+- backend/db.py
+  - PostgreSQL connection pooling
+  - Query helpers
+  - Conversation memory persistence
+- backend/mba_knowledge.py
+  - MBA knowledge base and keyword-intent detector
+- backend/ai_brain.py
+  - Groq LLM fallback (llama-3.3-70b-versatile)
+- backend/utils.py
+  - Category builder helper
 
 ### Frontend
-| Technology | Purpose |
-|---|---|
-| **HTML5 / CSS3 / JavaScript (Vanilla)** | Single-page chat interface — no frameworks or build tools required |
-| **Google Fonts (Fraunces + Instrument Sans)** | Typography for a polished, high-end UI |
-| **CSS Animations & Transitions** | Smooth bubble pop-in, typing indicators, and bar chart animations |
 
-### Data Pipeline
-| Technology | Purpose |
-|---|---|
-| **Selenium WebDriver** | Automated web scraping of ORCR data from the official HBTU admissions portal |
-| **Pandas** | Data cleaning, merging, and CSV processing |
-| **ChromeDriver** | Browser automation for Selenium |
+- backend/frontend/index.html
+  - Complete UI and client logic in one page
+  - Rich cards, chips, typing indicator, streaming typewriter effect
+- backend/frontend/config.js
+  - Runtime API base configuration
+- backend/frontend/images/hbtumitr-logo.png
+  - Branding asset
 
-### DevOps / Tooling
-| Technology | Purpose |
-|---|---|
-| **Git** | Version control |
-| **CORS Middleware** | Cross-origin request handling (configurable via environment variable) |
-| **Environment Variables** | Database credentials, allowed origins, connection pool sizing |
+### Data Pipeline and Assets
 
----
-
-## 5. Features
-
-### 5.1 Branch Prediction Engine
-- Accepts JEE Main CRL rank, category (OPEN/BC/SC/ST/EWS with sub-categories), and quota (Home State / All India).
-- Compares the user's rank against 3 years of historical closing ranks across all counselling rounds.
-- Groups branches into 5 probability tiers: **Very High** (≥80%), **High** (≥60%), **Moderate** (≥40%), **Low** (≥20%), and **Very Low** (<20%).
-- Results displayed in a rich prediction card with colour-coded branch tags.
-
-### 5.2 Seat Distribution Viewer
-- Retrieves seat matrix data for any branch and year from the database.
-- Displays total seats, quota-wise distribution (Home State / All India), and animated horizontal bar charts.
-- Supports natural language queries like "How many seats in CSE?" or "Show seat matrix for Mechanical 2025."
-
-### 5.3 Counselling Information System
-- Comprehensive knowledge base with 15+ topics derived from the official HBTU counselling brochure.
-- Covers: overview, eligibility, domicile, category codes, reservation, medical standards, fee structure, registration & choice filling, Rounds 1–5, FREEZE/FLOAT/WITHDRAW, internal sliding, spot round, refund policy, and document checklist.
-- Replies are streamed with a typewriter effect for a natural, engaging reading experience.
-
-### 5.4 Score-Based Intent Detection
-- Custom NLP engine using weighted keyword scoring across 4 intent categories: predict, seats, fees, and counselling_info.
-- Resolves keyword conflicts (e.g., "branch" appears in both prediction and seat queries) by comparing cumulative scores rather than first-match.
-- Subtopic detection routes counselling queries to the most relevant knowledge base entry.
-
-### 5.5 Multi-Turn Conversational Memory
-- Persistent, database-backed conversation state per user.
-- Progressively collects rank → category → quota across multiple messages.
-- Supports shortcut inputs (e.g., "1" for Home State, "2" for All India when prompted).
-- Memory is automatically cleared after a successful prediction to start fresh.
-
-### 5.6 Rich Interactive UI
-- Dark-themed, glassmorphism-styled chat interface with ambient radial gradients.
-- Message bubbles with avatar icons, timestamps, and smooth pop-in animations.
-- Action chips (gold) for guided navigation and suggestion chips (muted) for discovery.
-- Typing indicator with animated dots during response loading.
-- Clear chat and minimize controls.
-
-### 5.7 Data Pipeline (Scraping & Cleaning)
-- Selenium-based scraper navigates the official HBTU ORCR portal, selects each counselling round from the dropdown, and extracts tabular data with pagination support.
-- Pandas pipeline cleans column names, standardises data types, drops incomplete rows, and merges 3 years of data into a single CSV.
-- Cleaned data is loaded into PostgreSQL for efficient querying.
-
-### 5.8 Error Handling & Security
-- Global exception handler returns user-friendly error messages.
-- Input sanitisation: user IDs capped at 64 characters, messages at 500 characters.
-- CORS origins configurable via environment variable (defaults to `*` for development).
-- Database connection pooling (2–10 connections) prevents connection exhaustion.
+- scrape_ORCR.py (Selenium scraper)
+- clean_and_merge.py (Pandas cleaning/merging)
+- hbtu_all_rounds_orcr_2023.csv
+- hbtu_all_rounds_orcr_2024.csv
+- hbtu_all_rounds_orcr_2025.csv
+- hbtu_combined_cleaned.csv
+- seat_matrix_2025_normalized.csv
 
 ---
 
-## 6. Conclusions
+## 5. Data Pipeline and Dataset Status
 
-The HBTU Counselling Assistant Chatbot successfully demonstrates how structured data, rule-based NLP, and a well-designed conversational interface can be combined to solve a real-world information accessibility problem for engineering aspirants.
+### Scraping
 
-**Key achievements:**
-- **High intent detection accuracy (99%)** — The score-based approach correctly classifies 89 out of 90 test queries spanning prediction, seat distribution, and counselling process intents.
-- **Comprehensive counselling coverage** — 15+ counselling subtopics sourced directly from the official HBTU brochure, ensuring accuracy and reliability.
-- **Historical data-driven predictions** — 3 years of ORCR data (2023–2025) across 13 branches, multiple categories, and both quotas provide a robust basis for probability estimation.
-- **Production-ready architecture** — Connection pooling, persistent memory, configurable CORS, input validation, and environment-based configuration make the system deployable beyond a local development environment.
+The scraper automates the admissions.nic.in ORCR report page using Selenium, iterates through rounds, paginates via "Next", and exports a yearly CSV.
 
-**Future enhancements:**
-- Integration of a Large Language Model (LLM) for handling open-ended, out-of-scope queries with natural language generation.
-- Mobile-responsive design and Progressive Web App (PWA) support.
-- Year-over-year cutoff trend visualisation charts.
-- Branch comparison feature (side-by-side cutoffs, seats, and trends).
-- Admin dashboard for data management and usage analytics.
+### Cleaning and Merge
 
-The project serves as a practical, extensible foundation for building domain-specific educational chatbots, and has direct applicability for the thousands of students navigating HBTU admissions each year.
+The cleaning script:
+
+- Standardizes columns
+- Converts opening/closing ranks to numeric
+- Drops rows with missing closing rank
+- Adds year labels
+- Produces one combined output CSV
+
+### Reviewed Local Data (Current Workspace)
+
+- Combined ORCR rows (hbtu_combined_cleaned.csv): 2021
+- Seat matrix rows (seat_matrix_2025_normalized.csv): 374
+- ORCR year coverage: 2023, 2024, 2025
+
+Note: Raw ORCR branch naming is broader and inconsistent; the app resolves user queries through canonical branch aliases in backend logic.
 
 ---
 
-## 7. References
+## 6. System Architecture
 
-1. **HBTU Official Admissions Portal** — https://hbtu.admissions.nic.in  
-   Source of ORCR (Opening & Closing Rank) data and counselling brochure.
+### 6.1 Backend API Layer (FastAPI)
 
-2. **HBTU B.Tech Counselling Guidelines & Brochure (2025-26)**  
-   Official document detailing eligibility criteria, counselling procedure, category codes, reservation policies, fee structure, document checklist, and refund policies.
+Implemented endpoints:
 
-3. **JEE Main — National Testing Agency (NTA)** — https://jeemain.nta.nic.in  
-   The national-level entrance examination whose CRL ranks are used for HBTU seat allotment.
+- GET /health
+  - Verifies DB connectivity (SELECT 1)
+  - Returns ok or degraded
+- POST /predict
+  - Direct prediction endpoint
+- GET /seats
+  - Direct seat lookup endpoint
+- POST /chat
+  - Primary conversational endpoint for UI
 
-4. **FastAPI Documentation** — https://fastapi.tiangolo.com  
-   Web framework used for building the backend REST API.
+### 6.2 Intent Routing Strategy
 
-5. **Psycopg2 Documentation** — https://www.psycopg.org/docs/  
-   PostgreSQL adapter for Python, including connection pooling.
+The conversational flow in main.py uses weighted keyword scoring for B.Tech intents:
 
-6. **Selenium WebDriver Documentation** — https://www.selenium.dev/documentation/  
-   Browser automation tool used for scraping ORCR data from the admissions portal.
+- predict
+- seats
+- fees
+- counselling_info
 
-7. **Pandas Documentation** — https://pandas.pydata.org/docs/  
-   Data manipulation library used for cleaning and merging CSV datasets.
+Additional layers:
 
-8. **Pydantic Documentation** — https://docs.pydantic.dev  
-   Data validation library used with FastAPI for request/response models.
+- MBA intent detection runs early via detect_mba_intent
+- AI fallback (ai_brain_response) handles unknown or ambiguous queries
+
+### 6.3 Branch Prediction Logic
+
+Prediction is SQL-driven over historical cutoffs data:
+
+- Computes success per branch per year where closing_rank >= user_rank
+- Aggregates success count across available years
+- Converts to probability bands:
+  - Very High (>=80%)
+  - High (>=60%)
+  - Moderate (>=40%)
+  - Low (>=20%)
+  - Very Low (<20%)
+
+### 6.4 Seat Lookup Logic
+
+Seat query (run_seat_lookup) reads from seats table by canonical branch and year, then returns:
+
+- Total seats
+- Quota-wise distribution
+- Detailed rows
+
+### 6.5 Memory and Resilience
+
+Conversation memory design:
+
+- Primary persistence in PostgreSQL (conversation_memory table)
+- Auto-creation of memory table if missing
+- In-process fallback store when DB memory operations fail
+- Retry window for DB memory operations controlled by env config
+
+This is a practical reliability feature: chat state can continue even when memory writes to DB are temporarily unavailable.
+
 ---
 
-*Report generated for the HBTU Counselling Assistant Chatbot project.*
+## 7. MBA Module (New Functional Area)
+
+The codebase now includes a dedicated MBA admission assistant path:
+
+- Knowledge base in backend/mba_knowledge.py
+- Keyword intents for eligibility, registration, fees, rounds, seats, reservation, documents, withdrawal, medical, schedule
+- Returns stream-type responses with MBA-specific action chips
+
+This is a major expansion beyond only B.Tech counselling.
+
+---
+
+## 8. AI Fallback Layer
+
+backend/ai_brain.py integrates Groq chat completions with a constrained system prompt:
+
+- Focused domain: HBTU admissions and counselling
+- Refuses out-of-scope content
+- Advises not to fabricate cutoffs or fees
+
+Configured model:
+
+- llama-3.3-70b-versatile
+
+Used when deterministic routing does not confidently match a structured intent path.
+
+---
+
+## 9. Frontend Implementation Review
+
+The frontend is a single-page chat UI with a polished dark glassmorphism design.
+
+Implemented UX features:
+
+- Bot and user message bubbles with avatars and timestamps
+- Rich cards for prediction and seat distribution
+- Action chips and suggestion chips
+- Typing indicator
+- Streaming typewriter effect for long responses
+- Clear chat and minimize controls
+- API base selection via config.js or runtime origin fallback
+- HTML escaping for safe rendering (escapeHtml, safeMultilineHtml)
+
+Deployment telemetry scripts are also present (Vercel insights/speed scripts).
+
+---
+
+## 10. Configuration, Environment, and Deployment
+
+### Environment Variables (from backend/.env.example)
+
+- DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+- DB_SSLMODE
+- DB_MAX_CONNECTIONS
+- ALLOWED_ORIGINS
+- GROQ_API_KEY
+
+### Backend Run Target
+
+- Procfile command:
+  - uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+
+### Frontend Runtime API
+
+- backend/frontend/config.js currently points to a deployed Railway backend URL
+
+---
+
+## 11. Security and Robustness Observations
+
+### Present in Current Code
+
+- Input length caps for user_id and user_message
+- Global exception handling for API failures
+- Configurable CORS allowlist
+- Connection pooling for PostgreSQL
+- UI-side HTML escaping before rendering
+- .env ignored in Git, with tracked .env.example
+
+### Not Yet Implemented
+
+- Authentication/authorization
+- Rate limiting / abuse protection
+- Structured audit logging and request tracing
+- Automated test suite
+
+---
+
+## 12. Current Limitations
+
+1. Static counselling content:
+   Brochure-derived fee/date details are hardcoded and require manual updates each session.
+
+2. Data provisioning gap:
+   The app expects pre-populated cutoffs and seats tables, but repository code does not include a complete migration plus loader workflow for these tables.
+
+3. Test coverage:
+   No active automated tests are present in the current repository state.
+
+4. Intent handling edge cases:
+   Keyword scoring is practical but can still be brittle for highly ambiguous user text.
+
+5. External dependency risk:
+   AI fallback quality and availability depend on Groq API and valid API key configuration.
+
+---
+
+## 13. Recommendations and Next Steps
+
+1. Add repeatable DB migrations and seed/load scripts for cutoffs and seats.
+2. Add automated tests for intent classification, prediction flow transitions, and API response contracts.
+3. Add admission-year versioning for counselling knowledge blocks.
+4. Add backend rate limiting and request-level logging.
+5. Add admin tooling for knowledge/data updates without code edits.
+
+---
+
+## 14. Conclusion
+
+The project is now more than a basic B.Tech counselling bot. It is a multi-module admission assistant with:
+
+- Deterministic data-backed prediction and seat lookups
+- Counselling guidance with structured subtopics
+- MBA support
+- A robust conversational fallback path through LLM integration
+- A refined frontend experience designed for practical user guidance
+
+With data loading automation, testing, and governance improvements, this can evolve into a maintainable production-grade admission advisory platform.
+
+---
+
+## 15. References
+
+1. HBTU Admissions Portal: https://hbtu.admissions.nic.in
+2. HBTU Official Website: https://www.hbtu.ac.in
+3. FastAPI Documentation: https://fastapi.tiangolo.com
+4. Psycopg2 Documentation: https://www.psycopg.org/docs/
+5. Selenium Documentation: https://www.selenium.dev/documentation/
+6. Pandas Documentation: https://pandas.pydata.org/docs/
+7. Pydantic Documentation: https://docs.pydantic.dev
+8. Groq API Documentation: https://console.groq.com/docs
