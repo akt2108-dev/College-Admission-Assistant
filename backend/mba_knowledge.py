@@ -59,27 +59,28 @@ MBA_KB = {
     # ─────────────────────────────────────────────
 
     "fees": """
-MBA Fee Structure at HBTU, Kanpur (Session 2026-27)
+**MBA Fee Structure at HBTU, Kanpur (Session 2026-27)**
 
-Sr. 1 - Tuition Fee - 80,000
-Sr. 2(i) - Registration, Examination & Certification - 10,000
-Sr. 2(ii) - Facility - 30,500
-Sr. 2(iii) - Medical Fee - 3,000
-Sr. 2(iv) - Training & Placement - 4,000
-Sr. 2(v) - Activity Charges - 3,000
-Sr. 2(vi) - Caution Money - 5,000
-University Alumni Fund - 1,500
-Student Aid Fund - 1,500
-Contingency & Miscellaneous - 1,500
-GRAND TOTAL - ₹1,40,000
+| Component | Amount (Rs.) |
+|---|---:|
+| Tuition Fee | 80,000 |
+| Registration, Examination & Certification | 10,000 |
+| Facility | 30,500 |
+| Medical Fee | 3,000 |
+| Training & Placement | 4,000 |
+| Activity Charges | 3,000 |
+| Caution Money | 5,000 |
+| University Alumni Fund | 1,500 |
+| Student Aid Fund | 1,500 |
+| Contingency & Miscellaneous | 1,500 |
+| **Grand Total** | **1,40,000** |
 
-💡 Fee Payment During Counselling:
-Partial Academic Fee (at GD/PI stage):
-- GEN / OBC: Rs. 60,000/-
-- SC / ST: Rs. 45,000/-
-Balance Academic Fee (after seat allotment):
-- GEN / OBC: Rs. 80,000/-
-- SC / ST: Rs. 95,000/-
+💡 **Fee Payment During Counselling**
+
+| Stage | GEN / OBC (Rs.) | SC / ST (Rs.) |
+|---|---:|---:|
+| Partial Academic Fee (at GD/PI stage) | 60,000 | 45,000 |
+| Balance Academic Fee (after seat allotment) | 80,000 | 95,000 |
 
 ⚠️ Full academic fee must be deposited within the specified period after seat allotment, or admission will be cancelled.
 """,
@@ -148,47 +149,38 @@ The admission process is conducted in **two phases**:
     # ─────────────────────────────────────────────
 
     "seats": """
-MBA Seat Matrix at HBTU, Kanpur (Session 2026-27)
+**MBA Seat Matrix at HBTU, Kanpur (Session 2026-27)**
 
-Total Sanctioned Intake: 240 Seats
+**Total Sanctioned Intake: 240 Seats**
 
-Category: OP (General)
-- NO (No Reservation): 66
-- GL (Girls): 20
-- AF (Armed Forces): 4
-- FF (Freedom Fighters): 2
-- PH (Physically Handicapped): 4
-
-Category: BC (OBC)
-- NO: 45
-- GL: 13
-- AF: 3
-- FF: 1
-- PH: 3
-
-Category: SC
-- NO: 33
-- GL: 10
-- AF: 3
-- FF: 1
-- PH: 3
-
-Category: ST
-- NO: 4
-- GL: 1
-- AF: 0
-- FF: 0
-- PH: 0
-
-Category: EWS
-- NO: 17
-- GL: 5
-- AF: 0
-- AF: 1
-- FF: 1
-- PH: 0
-
-TOTAL: 240
+| Category | Sub-category | Seats |
+|---|---|---:|
+| OP (General) | NO (No Reservation) | 66 |
+| OP (General) | GL (Girls) | 20 |
+| OP (General) | AF (Armed Forces) | 4 |
+| OP (General) | FF (Freedom Fighters) | 2 |
+| OP (General) | PH (Physically Handicapped) | 4 |
+| BC (OBC) | NO | 45 |
+| BC (OBC) | GL | 13 |
+| BC (OBC) | AF | 3 |
+| BC (OBC) | FF | 1 |
+| BC (OBC) | PH | 3 |
+| SC | NO | 33 |
+| SC | GL | 10 |
+| SC | AF | 3 |
+| SC | FF | 1 |
+| SC | PH | 3 |
+| ST | NO | 4 |
+| ST | GL | 1 |
+| ST | AF | 0 |
+| ST | FF | 0 |
+| ST | PH | 0 |
+| EWS | NO | 17 |
+| EWS | GL | 5 |
+| EWS | AF | 1 |
+| EWS | FF | 1 |
+| EWS | PH | 0 |
+| **TOTAL** |  | **240** |
 """,
 
     # ─────────────────────────────────────────────
@@ -433,11 +425,18 @@ def detect_mba_intent(message: str):
     Detect MBA-specific intent with confidence score.
     Returns (intent, confidence) or (None, 0.0) if not MBA-related.
     """
-    msg = message.lower()
+    msg_norm = " " + " ".join(message.lower().replace("\n", " ").split()) + " "
+
+    def _contains_phrase(phrase: str) -> bool:
+        phrase_norm = " ".join(phrase.lower().split())
+        if not phrase_norm:
+            return False
+        return f" {phrase_norm} " in msg_norm
+
     scores = {}
 
     for intent, keywords in MBA_INTENT_KEYWORDS.items():
-        score = sum(1 for kw in keywords if kw in msg)
+        score = sum(1 for kw in keywords if _contains_phrase(kw))
         if score > 0:
             scores[intent] = score
 

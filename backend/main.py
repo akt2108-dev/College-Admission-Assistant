@@ -5,6 +5,9 @@ from pydantic import BaseModel
 from collections import defaultdict
 from db import execute_query, load_memory, save_memory, delete_memory, log_user_query
 from mba_knowledge import detect_mba_intent, get_mba_response
+from mca_knowledge import detect_mca_intent, get_mca_response
+from bsms_knowledge import detect_bsms_intent, get_bsms_response
+from placements_stats import get_placement_response, get_placement_files_health
 from ai_brain import ai_brain_response
 from utils import build_category
 import asyncio
@@ -224,6 +227,16 @@ def detect_intent(user_message: str) -> str:
         ("fee", 2), ("fees", 2), ("tuition", 2),
     ]
 
+    PLACEMENT_KEYWORDS = [
+        ("placement statistics", 6), ("placement stats", 6),
+        ("placements", 5), ("placement", 5),
+        ("median package", 6), ("average package", 6),
+        ("highest package", 6), ("highest paying company", 6),
+        ("highest package company", 6), ("highest package giving companies", 6),
+        ("companies visited", 6), ("visited companies", 5),
+        ("ctc", 4), ("package", 3), ("offers", 2),
+    ]
+
     COUNSELLING_KEYWORDS = [
         # strong signals (3 pts)
         ("counselling process", 3), ("counselling procedure", 3),
@@ -276,6 +289,7 @@ def detect_intent(user_message: str) -> str:
         "predict":         _score(PREDICT_KEYWORDS),
         "seats":           _score(SEATS_KEYWORDS),
         "fees":            _score(FEES_KEYWORDS),
+        "placement":       _score(PLACEMENT_KEYWORDS),
         "counselling_info": _score(COUNSELLING_KEYWORDS),
     }
 
@@ -283,6 +297,174 @@ def detect_intent(user_message: str) -> str:
     if scores[best_intent] == 0:
         return "unknown"
     return best_intent
+
+
+def detect_course_scope(user_message: str, extracted_branches: list[str] | None = None) -> str:
+    """
+    Detect which course the user explicitly refers to.
+    Returns one of: mba, mca, bsms, btech, multiple, unknown.
+    """
+    message = user_message.lower()
+    message_norm = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", message)).strip()
+    padded_message = f" {message_norm} "
+
+    def _has_norm_phrase(phrase: str) -> bool:
+        norm_phrase = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", phrase.lower())).strip()
+        return bool(norm_phrase) and f" {norm_phrase} " in padded_message
+
+    has_mba = re.search(r"\bmba\b", message) is not None
+    has_mca = re.search(r"\bmca\b", message) is not None
+    has_bsms = any(_has_norm_phrase(p) for p in [
+        "bsms",
+        "bs ms",
+        "bs-ms",
+        "bachelors in mathematics and data science",
+        "bachelor in mathematics and data science",
+        "mathematics and data science",
+        "maths and data science",
+        "math and data science",
+        "mds program",
+    ])
+    has_explicit_btech = (
+        re.search(r"\bb\.?\s*tech\b", message) is not None
+        or re.search(r"\bjee\b|\bcrl\b", message) is not None
+    )
+    # Branch mentions imply B.Tech only when non-B.Tech courses are not explicitly requested.
+    has_btech = has_explicit_btech or (bool(extracted_branches) and not (has_mba or has_mca or has_bsms))
+
+    active = sum([has_mba, has_mca, has_bsms, has_btech])
+    if active > 1:
+        return "multiple"
+    if has_mba:
+        return "mba"
+    if has_mca:
+        return "mca"
+    if has_bsms:
+        return "bsms"
+    if has_btech:
+        return "btech"
+    return "unknown"
+
+
+def infer_course_specific_intent(course: str, user_message: str) -> str:
+    """
+    Lightweight fallback intent resolver when course is explicit but
+    phrase-based detector confidence is low.
+    """
+    message_norm = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", user_message.lower())).strip()
+
+    def _has_any(phrases: list[str]) -> bool:
+        padded_message = f" {message_norm} "
+        for phrase in phrases:
+            norm_phrase = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", phrase.lower())).strip()
+            if not norm_phrase:
+                continue
+            if f" {norm_phrase} " in padded_message:
+                return True
+        return False
+
+    if course == "mba":
+        if _has_any(["gd/pi", "gd pi", "gdpi", "group discussion", "personal interview", "weightage", "rank formula"]):
+            return "mba_rank_gdpi"
+        if _has_any(["document", "documents", "certificate", "verification"]):
+            return "mba_documents"
+        if _has_any(["fee", "fees", "tuition", "cost", "payment"]):
+            return "mba_fees"
+        if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy"]):
+            return "mba_seats"
+        if _has_any(["reservation", "quota", "category", "obc", "sc", "st", "ews", "upgl", "upaf", "uphc", "upff"]):
+            return "mba_reservation"
+        if _has_any(["eligibility", "qualification", "criteria", "cat", "cmat", "cuet", "mat", "uet"]):
+            return "mba_eligibility"
+        if _has_any(["register", "registration", "apply", "application", "form"]):
+            return "mba_registration"
+        if _has_any(["withdraw", "refund", "cancel", "exit"]):
+            return "mba_withdrawal"
+        if _has_any(["medical", "fitness", "disability", "pwd", "hearing", "vision"]):
+            return "mba_medical"
+        if _has_any(["schedule", "date", "dates", "timeline", "round"]):
+            return "mba_schedule"
+        return "unknown"
+
+    if course == "mca":
+        if _has_any(["document", "documents", "certificate", "verification"]):
+            return "mca_documents"
+        if _has_any(["fee", "fees", "tuition", "cost", "payment"]):
+            return "mca_fees"
+        if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy"]):
+            return "mca_seats"
+        if _has_any(["reservation", "quota", "category", "obc", "sc", "st", "ews", "gl", "af", "ph", "ff"]):
+            return "mca_reservation"
+        if _has_any(["eligibility", "qualification", "criteria", "nimcet", "bca", "maths"]):
+            return "mca_eligibility"
+        if _has_any(["register", "registration", "apply", "application", "form", "choice filling"]):
+            return "mca_registration"
+        if _has_any(["withdraw", "refund", "cancel", "exit"]):
+            return "mca_withdrawal"
+        if _has_any(["medical", "fitness", "disability", "pwd", "hearing", "vision"]):
+            return "mca_medical"
+        if _has_any(["schedule", "date", "dates", "timeline", "round"]):
+            return "mca_schedule"
+        return "unknown"
+
+    if course == "bsms":
+        if _has_any(["document", "documents", "certificate", "verification", "aadhar", "checklist"]):
+            return "bsms_documents"
+        if _has_any(["fee", "fees", "tuition", "cost", "payment", "80000", "80 000"]):
+            return "bsms_fees"
+        if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy", "total seats", "60 seats"]):
+            return "bsms_seats"
+        if _has_any(["reservation", "quota", "category", "obc", "sc", "st", "ews", "gl", "af", "ph", "ff"]):
+            return "bsms_reservation"
+        if _has_any(["eligibility", "qualification", "criteria", "jee", "cuet", "10 2", "marks", "percentage"]):
+            return "bsms_eligibility"
+        if _has_any(["register", "registration", "apply", "application", "form", "choice filling", "choice locking"]):
+            return "bsms_registration"
+        if _has_any(["withdraw", "refund", "cancel", "exit", "processing fee"]):
+            return "bsms_withdrawal"
+        if _has_any(["medical", "fitness", "disability", "pwd", "hearing", "vision", "cmo"]):
+            return "bsms_medical"
+        if _has_any(["rank", "crl", "air", "normalised", "normalized", "tie break", "cuet 308", "cuet 319"]):
+            return "bsms_rank_cuet"
+        if _has_any(["schedule", "date", "dates", "timeline", "round", "phase", "july", "august"]):
+            return "bsms_schedule"
+        if _has_any(["round", "rounds", "phase 1", "phase 2", "phase 3", "counselling"]):
+            return "bsms_rounds"
+        return "unknown"
+
+    return "unknown"
+
+
+def should_clarify_course(
+    user_message: str,
+    intent: str,
+    course_scope: str,
+    extracted_branches: list[str],
+) -> bool:
+    """
+    Ask user to specify course when query is common across programs
+    and the message doesn't clearly target MBA/MCA/BSMS/B.Tech.
+    """
+    if course_scope != "unknown":
+        return False
+    if extracted_branches:
+        return False
+
+    message = user_message.lower()
+    common_course_cues = [
+        "seat", "seats", "intake", "capacity",
+        "fee", "fees", "tuition", "cost",
+        "document", "documents", "certificate", "verification",
+        "reservation", "quota", "category",
+        "eligibility", "eligible", "counselling", "counseling",
+        "admission", "register", "registration", "schedule", "timeline",
+    ]
+
+    if intent in {"seats", "fees", "counselling_info"}:
+        return True
+    if intent == "unknown" and any(cue in message for cue in common_course_cues):
+        return True
+    return False
 
 
 def is_prediction_followup(
@@ -593,33 +775,36 @@ COUNSELLING_DATA = {
     "fee_structure": {
         "title": "Fee Structure — B.Tech 2025-26",
         "message": (
-            "💰 FEE STRUCTURE FOR B.TECH. (Session 2025-26)\n\n"
-            "─── ANNUAL ACADEMIC FEE: Rs. 1,35,000 ───\n\n"
-            "  A. Tuition Fee                          → Rs. 75,000\n\n"
-            "  B. Other Fees:\n"
-            "    • Registration, Exam & Certification  → Rs. 10,000\n"
-            "    • Facility charges                    → Rs. 30,500\n"
-            "    • Medical Fee                         → Rs.  3,000\n"
-            "    • Training & Placement                → Rs.  4,000\n"
-            "    • Activity Charges                    → Rs.  3,000\n"
-            "    • Caution Money                       → Rs.  5,000\n"
-            "    • University Alumni Fund              → Rs.  1,500\n"
-            "    • Student Aid Fund                    → Rs.  1,500\n"
-            "    • Contingency & Miscellaneous         → Rs.  1,500\n"
-            "    Total (Other fees)                    → Rs. 60,000\n\n"
-            "  GRAND TOTAL                             → Rs. 1,35,000\n\n"
-            "─── PAYMENT MODES ───\n"
-            "  • Demand Draft (in favour of 'Finance Controller, HBTU Kanpur', payable at Kanpur)\n"
-            "  • Cash\n"
-            "  • Online mode (check one-time payment limit of debit/credit card)\n"
-            "  ⚠️ Full payment only — partial payment is NOT allowed\n\n"
-            "─── REGISTRATION FEE ───\n"
-            "  • Rs. 2500 (Non-Refundable) — paid online at hbtu.admissions.nic.in\n"
-            "  • Phase 2 (Round 4) requires fresh registration + Rs. 2500 again\n\n"
-            "─── FEE WAIVER ───\n"
-            "  • Tuition Fee Waiver (5% seats): Rs. 75,000 waived; other Rs. 60,000 payable\n"
-            "    Family income must be ≤ Rs. 8 lakh/year (Certificate No. 11)\n"
-            "  • Full Fee Waiver: 2 seats/branch for SC/ST girls (merit basis)"
+            "## B.Tech Fee Structure (Session 2025-26)\n\n"
+            "| Component | Amount (Rs.) |\n"
+            "|---|---:|\n"
+            "| Tuition Fee | 75,000 |\n"
+            "| Registration, Exam & Certification | 10,000 |\n"
+            "| Facility Charges | 30,500 |\n"
+            "| Medical Fee | 3,000 |\n"
+            "| Training & Placement | 4,000 |\n"
+            "| Activity Charges | 3,000 |\n"
+            "| Caution Money | 5,000 |\n"
+            "| University Alumni Fund | 1,500 |\n"
+            "| Student Aid Fund | 1,500 |\n"
+            "| Contingency & Miscellaneous | 1,500 |\n"
+            "| **Total Academic Fee** | **1,35,000** |\n\n"
+            "### Registration Fee\n"
+            "| Item | Amount (Rs.) | Notes |\n"
+            "|---|---:|---|\n"
+            "| Counselling Registration | 2,500 | Non-refundable; paid at hbtu.admissions.nic.in |\n"
+            "| Phase 2 Re-registration (Round 4) | 2,500 | Fresh registration required in eligible cases |\n\n"
+            "### Fee Waiver\n"
+            "| Type | Benefit | Condition |\n"
+            "|---|---|---|\n"
+            "| Tuition Fee Waiver (TFW) | 75,000 tuition waived; other 60,000 payable | Family income <= 8 lakh/year (Certificate No. 11) |\n"
+            "| Full Fee Waiver | 2 seats per branch for SC/ST girls | Merit basis |\n\n"
+            "### Payment Modes\n"
+            "- Demand Draft (in favour of 'Finance Controller, HBTU Kanpur', payable at Kanpur)\n"
+            "- Cash\n"
+            "- Online mode (check one-time payment limit of debit/credit card)\n"
+            "\n"
+            "⚠️ Full payment only; partial payment is not allowed."
         ),
         "actions": [
             {"label": "Refund Policy",       "value": "What is the refund policy?"},
@@ -1062,16 +1247,30 @@ def run_seat_lookup(branch: str, year: int) -> dict | None:
 def format_seat_response(seat_data: dict | None) -> str:
     if not seat_data:
         return "Seat data not found for the requested branch and year."
-
-    response = (
-        f"Seat distribution for {seat_data['branch']} in {seat_data['year']}:\n\n"
-        f"Total Seats: {seat_data['total_seats']}\n\n"
-        "Quota Distribution:\n"
-    )
+    summary_lines = [
+        "| Quota | Seats |",
+        "|---|---:|",
+    ]
     for quota, count in seat_data["quota_distribution"].items():
-        response += f"- {quota}: {count}\n"
-    response += "\nYou can ask for category-wise details if needed."
-    return response
+        summary_lines.append(f"| {quota} | {count} |")
+
+    detail_lines = [
+        "| Quota | Category | Seats |",
+        "|---|---|---:|",
+    ]
+    for row in seat_data.get("details", []):
+        detail_lines.append(
+            f"| {row['quota']} | {row['category']} | {row['seat_count']} |"
+        )
+
+    return (
+        f"## Seat Matrix — {seat_data['branch']} ({seat_data['year']})\n\n"
+        f"**Total Seats:** {seat_data['total_seats']}\n\n"
+        "### Quota-wise Summary\n"
+        + "\n".join(summary_lines)
+        + "\n\n### Category-wise Breakdown\n"
+        + "\n".join(detail_lines)
+    )
 
 
 # ─────────────────────────────────────────────
@@ -1129,6 +1328,24 @@ def health_check():
                 "database": "unavailable",
             },
         )
+
+
+@app.get("/health/startup")
+def startup_health_check():
+    placement_csv_health = get_placement_files_health()
+    status_ok = placement_csv_health.get("ok", False)
+
+    payload = {
+        "status": "ok" if status_ok else "degraded",
+        "checks": {
+            "placement_csv": placement_csv_health,
+        },
+    }
+
+    if status_ok:
+        return payload
+
+    return JSONResponse(status_code=503, content=payload)
 
 # Conversation memory is now DB-backed (see db.py)
 # EMPTY_MEMORY returns a fresh dict for new users.
@@ -1332,19 +1549,65 @@ async def chat(
     extracted_branches = extract_branches(user_message)
     extracted_year     = extract_year(user_message)
     intent = detect_intent(user_message)
+    course_scope = detect_course_scope(user_message, extracted_branches)
 
     try:
         asyncio.create_task(log_user_query(user_id, user_message, intent, session_id))
     except Exception:
         pass
 
-# ── MBA intent check (runs before all B.Tech routing) ────────────────────
-    mba_intent, mba_confidence = detect_mba_intent(user_message)
-    if mba_intent and mba_confidence > 0.3:
+    # Placement routing is independent of admission-course KB routing.
+    # Handle it early so terms like MCA/MBA in placement queries don't divert.
+    if intent == "placement":
+        placement_payload = get_placement_response(user_message)
         return build_ui_response(
             response_type="stream",
-            message=get_mba_response(mba_intent),
-            data={"subtopic": mba_intent, "title": "MBA Admission — HBTU"},
+            message=placement_payload.get("message", "Placement information is unavailable right now."),
+            data=placement_payload.get("data", {}),
+            actions=placement_payload.get("actions", []),
+            suggestions=placement_payload.get("suggestions", []),
+        )
+
+    if course_scope == "multiple":
+        return build_ui_response(
+            response_type="question",
+            message=(
+                "I found multiple courses in your message. "
+                "Please ask for one course at a time: B.Tech, MBA, MCA, or BS-MS."
+            ),
+            actions=[
+                {"label": "B.Tech", "value": "Tell me about B.Tech admission"},
+                {"label": "MBA", "value": "Tell me about MBA admission"},
+                {"label": "MCA", "value": "Tell me about MCA admission"},
+                {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
+            ],
+        )
+
+# ── MBA intent check (runs before all B.Tech routing) ────────────────────
+    if course_scope == "mba":
+        mba_intent, mba_confidence = detect_mba_intent(user_message)
+        resolved_mba_intent = (
+            mba_intent if (mba_intent and mba_confidence > 0.3)
+            else infer_course_specific_intent("mba", user_message)
+        )
+        if resolved_mba_intent == "unknown":
+            return build_ui_response(
+                response_type="stream",
+                message=(
+                    "Please ask more specifically, for example: MBA eligibility, MBA fees, "
+                    "MBA seat matrix, MBA documents, or MBA counselling schedule."
+                ),
+                actions=[
+                    {"label": "MBA Eligibility", "value": "What is MBA eligibility?"},
+                    {"label": "MBA Fees", "value": "What are MBA fees?"},
+                    {"label": "MBA Seats", "value": "Show MBA seat matrix"},
+                    {"label": "MBA Schedule", "value": "Show MBA counselling schedule"},
+                ],
+            )
+        return build_ui_response(
+            response_type="stream",
+            message=get_mba_response(resolved_mba_intent),
+            data={"subtopic": resolved_mba_intent, "title": "MBA Admission — HBTU"},
             actions=[
                 {"label": "MBA Eligibility",    "value": "What is MBA eligibility?"},
                 {"label": "MBA Fees",           "value": "What are MBA fees?"},
@@ -1357,6 +1620,97 @@ async def chat(
                 "What is the MBA registration fee?",
                 "When is the MBA Round 1 result?",
                 "What is GD/PI weightage?",
+            ],
+        )
+
+    # ── MCA intent check (runs before all B.Tech routing) ────────────────────
+    if course_scope == "mca":
+        mca_intent, mca_confidence = detect_mca_intent(user_message)
+        resolved_mca_intent = (
+            mca_intent if (mca_intent and mca_confidence > 0.3)
+            else infer_course_specific_intent("mca", user_message)
+        )
+        if resolved_mca_intent == "unknown":
+            return build_ui_response(
+                response_type="stream",
+                message=(
+                    "Please ask more specifically, for example: MCA eligibility, MCA fees, "
+                    "MCA seat matrix, MCA documents, or MCA counselling schedule."
+                ),
+                actions=[
+                    {"label": "MCA Eligibility", "value": "What is MCA eligibility?"},
+                    {"label": "MCA Fees", "value": "What are MCA fees?"},
+                    {"label": "MCA Seats", "value": "Show MCA seat matrix"},
+                    {"label": "MCA Schedule", "value": "Show MCA counselling schedule"},
+                ],
+            )
+        mca_guidelines_note = (
+            "\n\nThis MCA guidance is based on the 2025-26 admission guidelines. "
+            "For updated guidelines, please check https://www.hbtu.ac.in and "
+            "https://erp.hbtu.ac.in/HBTUAdmissions.html"
+        )
+        return build_ui_response(
+            response_type="stream",
+            message=get_mca_response(resolved_mca_intent) + mca_guidelines_note,
+            data={"subtopic": resolved_mca_intent, "title": "MCA Admission — HBTU"},
+            actions=[
+                {"label": "MCA Eligibility",  "value": "What is MCA eligibility?"},
+                {"label": "MCA Fees",         "value": "What are MCA fees?"},
+                {"label": "MCA Rounds",       "value": "Explain MCA counselling rounds"},
+                {"label": "MCA Seats",        "value": "Show MCA seat matrix"},
+                {"label": "MCA Reservation",  "value": "What is MCA reservation policy?"},
+                {"label": "MCA Documents",    "value": "What documents are needed for MCA?"},
+            ],
+            suggestions=[
+                "What is the MCA registration fee?",
+                "When is the MCA Round 1 result?",
+                "What is MCA total fee at HBTU?",
+            ],
+        )
+
+    # ── BS-MS intent check (runs before all B.Tech routing) ─────────────────
+    if course_scope == "bsms":
+        bsms_intent, bsms_confidence = detect_bsms_intent(user_message)
+        resolved_bsms_intent = (
+            bsms_intent if (bsms_intent and bsms_confidence > 0.3)
+            else infer_course_specific_intent("bsms", user_message)
+        )
+        if resolved_bsms_intent == "unknown":
+            resolved_bsms_intent = "bsms_general"
+
+        return build_ui_response(
+            response_type="stream",
+            message=get_bsms_response(resolved_bsms_intent),
+            data={
+                "subtopic": resolved_bsms_intent,
+                "title": "BS-MS (Mathematics and Data Science) Admission — HBTU",
+            },
+            actions=[
+                {"label": "BS-MS Eligibility", "value": "What is BS-MS eligibility?"},
+                {"label": "BS-MS Fees", "value": "What are BS-MS fees?"},
+                {"label": "BS-MS Rounds", "value": "Explain BS-MS counselling rounds"},
+                {"label": "BS-MS Seats", "value": "Show BS-MS seat matrix"},
+                {"label": "BS-MS Reservation", "value": "What is BS-MS reservation policy?"},
+                {"label": "BS-MS Documents", "value": "What documents are needed for BS-MS?"},
+            ],
+            suggestions=[
+                "What is the BS-MS registration fee?",
+                "Show BS-MS schedule for 2025-26",
+            ],
+        )
+
+    if course_scope == "btech" and intent == "unknown" and not extracted_branches:
+        return build_ui_response(
+            response_type="stream",
+            message=(
+                "Please ask more specifically, for example: B.Tech eligibility, B.Tech fees, "
+                "B.Tech seat matrix, B.Tech documents, or B.Tech counselling process."
+            ),
+            actions=[
+                {"label": "B.Tech Eligibility", "value": "What is the eligibility criteria?"},
+                {"label": "B.Tech Fees", "value": "What is the B.Tech fee structure?"},
+                {"label": "B.Tech Seats", "value": "Show seat distribution for CSE 2025"},
+                {"label": "B.Tech Counselling", "value": "Explain the counselling process"},
             ],
         )
 
@@ -1493,6 +1847,75 @@ async def chat(
     ):
         intent = "predict"
 
+    if should_clarify_course(user_message, intent, course_scope, extracted_branches):
+        conversation_history = []
+        user_context = {
+            k: memory[k] for k in ("rank", "base_category", "quota")
+            if memory.get(k)
+        }
+        ai_reply = ai_brain_response(
+            user_message=user_message,
+            conversation_history=conversation_history,
+            user_context=user_context,
+        )
+
+        message_lc = user_message.lower()
+        if any(k in message_lc for k in ["fee", "fees", "tuition", "cost"]):
+            clarify_actions = [
+                {"label": "B.Tech Fees", "value": "What is the B.Tech fee structure?"},
+                {"label": "MBA Fees", "value": "What are MBA fees?"},
+                {"label": "MCA Fees", "value": "What are MCA fees?"},
+                {"label": "BS-MS Fees", "value": "What are BS-MS fees?"},
+            ]
+        elif any(k in message_lc for k in ["seat", "seats", "seat matrix", "intake", "capacity"]):
+            clarify_actions = [
+                {"label": "B.Tech Seats", "value": "Show B.Tech seat distribution"},
+                {"label": "MBA Seats", "value": "Show MBA seat matrix"},
+                {"label": "MCA Seats", "value": "Show MCA seat matrix"},
+                {"label": "BS-MS Seats", "value": "Show BS-MS seat matrix"},
+            ]
+        elif any(k in message_lc for k in ["document", "documents", "certificate", "verification"]):
+            clarify_actions = [
+                {"label": "B.Tech Documents", "value": "What documents are needed for B.Tech?"},
+                {"label": "MBA Documents", "value": "What documents are needed for MBA?"},
+                {"label": "MCA Documents", "value": "What documents are needed for MCA?"},
+                {"label": "BS-MS Documents", "value": "What documents are needed for BS-MS?"},
+            ]
+        elif any(k in message_lc for k in ["reservation", "quota", "category", "obc", "sc", "st", "ews"]):
+            clarify_actions = [
+                {"label": "B.Tech Reservation", "value": "Tell me B.Tech reservation policy"},
+                {"label": "MBA Reservation", "value": "What is MBA reservation policy?"},
+                {"label": "MCA Reservation", "value": "What is MCA reservation policy?"},
+                {"label": "BS-MS Reservation", "value": "What is BS-MS reservation policy?"},
+            ]
+        elif any(k in message_lc for k in ["date", "dates", "schedule", "timeline", "start"]):
+            clarify_actions = [
+                {"label": "B.Tech Schedule", "value": "Show B.Tech counselling schedule"},
+                {"label": "MBA Schedule", "value": "Show MBA counselling schedule"},
+                {"label": "MCA Schedule", "value": "Show MCA counselling schedule"},
+                {"label": "BS-MS Schedule", "value": "Show BS-MS counselling schedule"},
+            ]
+        elif any(k in message_lc for k in ["eligibility", "eligible", "criteria", "qualification"]):
+            clarify_actions = [
+                {"label": "B.Tech Eligibility", "value": "What is B.Tech eligibility criteria?"},
+                {"label": "MBA Eligibility", "value": "What is MBA eligibility?"},
+                {"label": "MCA Eligibility", "value": "What is MCA eligibility?"},
+                {"label": "BS-MS Eligibility", "value": "What is BS-MS eligibility?"},
+            ]
+        else:
+            clarify_actions = [
+                {"label": "B.Tech", "value": "Tell me about B.Tech admission"},
+                {"label": "MBA", "value": "Tell me about MBA admission"},
+                {"label": "MCA", "value": "Tell me about MCA admission"},
+                {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
+            ]
+
+        return build_ui_response(
+            response_type="stream",
+            message=ai_reply,
+            actions=clarify_actions,
+        )
+
     if intent == "predict":  # ← ONLY prompt for rank when user explicitly wants prediction
 
         if memory["rank"] and not memory["base_category"]:
@@ -1624,7 +2047,10 @@ async def chat(
         actions=[
             {"label": "🎯 Predict My Branch",   "value": "I want to predict my branch"},
             {"label": "💺 Seat Distribution",   "value": "Show seat distribution"},
+            {"label": "📈 Placement Stats",     "value": "Show placement statistics year-wise"},
             {"label": "📋 B.Tech Counselling",  "value": "Explain the counselling process"},
             {"label": "🎓 MBA Admission",       "value": "Tell me about MBA admission at HBTU"},
+            {"label": "🧑‍💻 MCA Admission",      "value": "Tell me about MCA admission at HBTU"},
+            {"label": "📐 BS-MS Admission",      "value": "Tell me about BS-MS admission at HBTU"},
         ],
     )

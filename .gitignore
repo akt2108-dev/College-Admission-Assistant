@@ -35,3 +35,4 @@ htmlcov/
 .nox/
 backend/__pycache__/db.cpython-313.pyc
 backend/__pycache__/main.cpython-313.pyc
+backend/__pycache__/main.cpython-313.pyc
