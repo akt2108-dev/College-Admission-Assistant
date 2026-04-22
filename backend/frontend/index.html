@@ -163,6 +163,14 @@ body::before{
   border:1px solid rgba(212,170,80,.45);
   border-bottom-right-radius:3px;
 }
+.msg-link{
+  color:#79d8ff;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  word-break:break-all;
+}
+.msg-link:hover{color:#9ee7ff}
+.msg-link:visited{color:#7fc2ff}
 .ts{font-size:.62rem;color:var(--muted);opacity:.6;margin-top:3px;padding:0 4px}
 .row.user .ts{text-align:right}
 
@@ -434,8 +442,19 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function linkifyEscapedHtml(escapedHtml) {
+  const urlRegex = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  return escapedHtml.replace(urlRegex, (rawUrl) => {
+    const trailing = (rawUrl.match(/[),.!?;:]+$/) || [""])[0];
+    const cleanUrl = trailing ? rawUrl.slice(0, -trailing.length) : rawUrl;
+    const href = /^www\./i.test(cleanUrl) ? `https://${cleanUrl}` : cleanUrl;
+    return `<a class="msg-link" href="${href}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${trailing}`;
+  });
+}
+
 function safeMultilineHtml(value) {
-  return escapeHtml(value).replace(/\n/g, "<br>");
+  const escaped = escapeHtml(value).replace(/\n/g, "<br>");
+  return linkifyEscapedHtml(escaped);
 }
 
 function scrollBottom() {
@@ -761,7 +780,7 @@ async function renderStreamResponse(data) {
         if (ch === "\n") {
           htmlBuf += "<br>";
         } else {
-          htmlBuf += ch;
+          htmlBuf += escapeHtml(ch);
         }
       }
       bbl.innerHTML = htmlBuf;
@@ -773,6 +792,9 @@ async function renderStreamResponse(data) {
       }
     }, TICK_MS);
   });
+
+  // Final pass: ensure links are clickable and styled.
+  bbl.innerHTML = safeMultilineHtml(message);
 
   // Show chips after stream finishes
   renderChips(data);
