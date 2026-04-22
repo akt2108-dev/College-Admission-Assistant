@@ -7,6 +7,7 @@
 <title>HBTUMitr</title>
 <link rel="icon" type="image/png" href="./images/hbtumitr-logo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 /* ── Reset & tokens ───────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -144,6 +145,7 @@ body::before{
 .av.usr{background:linear-gradient(135deg,#2a5080,#0e1e30);font-size:11px}
 
 .col{display:flex;flex-direction:column;max-width:82%}
+.col{min-width:0}
 .row.user .col{align-items:flex-end}
 
 .bbl{
@@ -163,6 +165,73 @@ body::before{
   border:1px solid rgba(212,170,80,.45);
   border-bottom-right-radius:3px;
 }
+
+.bbl p{margin:.35rem 0}
+.bbl ul,.bbl ol{margin:.4rem 0 .55rem 1.1rem}
+.bbl li{margin:.2rem 0}
+.bbl h1,.bbl h2,.bbl h3,.bbl h4{
+  font-family:var(--font-display);
+  color:var(--gold-lt);
+  margin:.45rem 0 .35rem;
+  line-height:1.25;
+}
+.bbl h1{font-size:1.02rem}
+.bbl h2{font-size:.98rem}
+.bbl h3{font-size:.92rem}
+.bbl h4{font-size:.88rem}
+
+.bbl a{
+  color:#79d8ff;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  word-break:break-all;
+}
+.bbl a:hover{color:#9ee7ff}
+.bbl a:visited{color:#7fc2ff}
+
+.bbl .tbl-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  margin-top:8px;
+}
+
+.bbl .tbl-scroll::-webkit-scrollbar{height:6px}
+.bbl .tbl-scroll::-webkit-scrollbar-thumb{
+  background:rgba(212,170,80,.28);
+  border-radius:999px;
+}
+
+.bbl table{
+  width:max-content;
+  min-width:100%;
+  border-collapse:collapse;
+  margin-top:0;
+  border:1px solid var(--border);
+}
+
+.bbl th,
+.bbl td{
+  border:1px solid var(--border);
+  padding:6px 8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+.bbl th{
+  color:var(--gold-lt);
+  background:rgba(212,170,80,.08);
+}
+
+.bbl code{
+  background:rgba(255,255,255,.08);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:1px 5px;
+  font-size:.78rem;
+}
+
 .msg-link{
   color:#79d8ff;
   text-decoration:underline;
@@ -420,11 +489,37 @@ function getApiBase() {
 
 const API_BASE = getApiBase();
 
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
 const DEFAULT_ACTIONS = [
   { label: "📊 Predict My Branch",    value: "I want to predict my branch" },
   { label: "💺 Seat Distribution",    value: "Show seat distribution" },
   { label: "📋 Counselling Process",  value: "Explain the counselling process" },
 ];
+
+const PLACEMENT_FOLLOWUP_CHIPS = [
+  { label: "Placement Overview", value: "Show placement statistics year-wise", kind: "action" },
+  { label: "Highest Package", value: "Show highest package year-wise", kind: "action" },
+  { label: "Median Package", value: "Show median package year-wise", kind: "action" },
+  { label: "Companies Visited", value: "Show companies visited year-wise", kind: "action" },
+  { label: "Average Package", value: "Show average package year-wise", kind: "suggest" },
+  { label: "Highest Package Companies", value: "Show highest package giving companies year-wise", kind: "suggest" },
+];
+
+function isPlacementResponse(data) {
+  const subtopic = data?.data?.subtopic;
+  const hasPlacementYears = Array.isArray(data?.data?.available_years);
+  return hasPlacementYears || typeof subtopic === "string" && (
+    subtopic.includes("package") ||
+    subtopic.includes("placement") ||
+    subtopic.includes("companies_visited") ||
+    subtopic.includes("branch_wise") ||
+    subtopic.includes("course_wise")
+  );
+}
 
 /* ── Helpers ──────────────────────────────────── */
 function now() {
@@ -457,6 +552,19 @@ function safeMultilineHtml(value) {
   return linkifyEscapedHtml(escaped);
 }
 
+function wrapScrollableTables(rootEl) {
+  if (!rootEl) return;
+  rootEl.querySelectorAll("table").forEach((table) => {
+    if (table.parentElement && table.parentElement.classList.contains("tbl-scroll")) {
+      return;
+    }
+    const wrapper = document.createElement("div");
+    wrapper.className = "tbl-scroll";
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+}
+
 function scrollBottom() {
   const m = $("msgs");
   m.scrollTop = m.scrollHeight;
@@ -477,7 +585,12 @@ function addBubble(html, side) {
 
   const bbl = document.createElement("div");
   bbl.className = `bbl ${side}`;
-  bbl.innerHTML = safeMultilineHtml(html);
+  if (side === "bot") {
+    bbl.innerHTML = marked.parse(String(html || ""));
+    wrapScrollableTables(bbl);
+  } else {
+    bbl.textContent = String(html || "");
+  }
 
   const ts = document.createElement("div");
   ts.className = "ts";
@@ -650,6 +763,7 @@ function buildCounsellingCard(data, message) {
 function renderBotResponse(data) {
   const type    = data.type || "unknown";
   const message = data.message || "I'm here to help.";
+  const hasMarkdownTable = /\|\s*[^\n|]+\s*\|/.test(message);
 
   // Streaming responses get typewriter effect (no card)
   if (type === "stream") {
@@ -665,7 +779,7 @@ function renderBotResponse(data) {
     col.insertBefore(card, col.querySelector(".ts"));
   }
 
-  if (type === "seats" && data.data && data.data.branch) {
+  if (type === "seats" && data.data && data.data.branch && !hasMarkdownTable) {
     const card = buildSeatCard(data.data);
     if (card) col.insertBefore(card, col.querySelector(".ts"));
   }
@@ -708,8 +822,27 @@ function renderChips(data) {
   const chipsEl = $("chips");
   chipsEl.innerHTML = "";
 
-  const actions     = data.actions || [];
-  const suggestions = data.suggestions || [];
+  const actions     = [...(data.actions || [])];
+  const suggestions = [...(data.suggestions || [])];
+
+  if (isPlacementResponse(data)) {
+    const existingValues = new Set([
+      ...actions.map((a) => String(a?.value || a?.label || "").toLowerCase()),
+      ...suggestions.map((s) => String(s || "").toLowerCase()),
+    ]);
+
+    PLACEMENT_FOLLOWUP_CHIPS.forEach((chip) => {
+      const key = String(chip.value || chip.label || "").toLowerCase();
+      if (!key || existingValues.has(key)) return;
+
+      if (chip.kind === "action") {
+        actions.push({ label: chip.label, value: chip.value });
+      } else {
+        suggestions.push(chip.value);
+      }
+      existingValues.add(key);
+    });
+  }
 
   actions.forEach((a, i) => {
     const c = document.createElement("div");
@@ -731,6 +864,13 @@ function renderChips(data) {
 
   if (actions.length === 0 && suggestions.length === 0) {
     showDefaultChips();
+  }
+}
+
+function focusInputIfDesktop() {
+  const isDesktopPointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if (isDesktopPointer) {
+    $("inp").focus();
   }
 }
 
@@ -770,20 +910,13 @@ async function renderStreamResponse(data) {
   const CHARS_PER_TICK = 3;
   const TICK_MS = 12;
   let i = 0;
-  let htmlBuf = "";
 
   await new Promise(resolve => {
     const timer = setInterval(() => {
-      const end = Math.min(i + CHARS_PER_TICK, message.length);
-      for (; i < end; i++) {
-        const ch = message[i];
-        if (ch === "\n") {
-          htmlBuf += "<br>";
-        } else {
-          htmlBuf += escapeHtml(ch);
-        }
-      }
-      bbl.innerHTML = htmlBuf;
+      i = Math.min(i + CHARS_PER_TICK, message.length);
+      const chunk = message.substring(0, i);
+      bbl.innerHTML = marked.parse(chunk);
+      wrapScrollableTables(bbl);
       scrollBottom();
 
       if (i >= message.length) {
@@ -793,15 +926,16 @@ async function renderStreamResponse(data) {
     }, TICK_MS);
   });
 
-  // Final pass: ensure links are clickable and styled.
-  bbl.innerHTML = safeMultilineHtml(message);
+  // Final pass: render full markdown after streaming completes.
+  bbl.innerHTML = marked.parse(message);
+  wrapScrollableTables(bbl);
 
   // Show chips after stream finishes
   renderChips(data);
   scrollBottom();
 
   $("send").disabled = false;
-  $("inp").focus();
+  focusInputIfDesktop();
 }
 
 /* ── Send message ─────────────────────────────── */
@@ -852,7 +986,7 @@ async function sendMsg(override = null) {
   }
 
   $("send").disabled = false;
-  inp.focus();
+  focusInputIfDesktop();
 }
 
 /* ── UI controls ─────────────────────────────── */

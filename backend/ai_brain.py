@@ -1,7 +1,41 @@
 from groq import Groq
 import os
+import re
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+
+def _needs_course_clarification(user_message: str) -> bool:
+    """Return True for common admission queries that don't specify course."""
+    message = user_message.lower()
+
+    has_bsms = (
+        re.search(r"\bbs\s*[- ]?\s*ms\b", message) is not None
+        or "mathematics and data science" in message
+        or "maths and data science" in message
+        or "math and data science" in message
+        or "bachelors in mathematics and data science" in message
+        or "bachelor in mathematics and data science" in message
+    )
+
+    has_explicit_course = (
+        re.search(r"\bmba\b", message) is not None
+        or re.search(r"\bmca\b", message) is not None
+        or re.search(r"\bb\.?\s*tech\b", message) is not None
+        or has_bsms
+    )
+    if has_explicit_course:
+        return False
+
+    common_query_cues = [
+        "seat", "seats", "seat matrix", "intake",
+        "fee", "fees", "tuition", "cost",
+        "document", "documents", "certificate", "verification",
+        "reservation", "quota", "category",
+        "eligibility", "eligible", "admission", "counselling", "counseling",
+        "schedule", "timeline", "dates", "register", "registration",
+    ]
+    return any(cue in message for cue in common_query_cues)
 
 SYSTEM_PROMPT = """You are an Admission assistant for HBTU (Harcourt Butler Technical University), Kanpur.
 
@@ -33,11 +67,21 @@ STRICT RULES:
 18. If asked about Registrar of HBTU, reply: "As per available information, the Registrar is Amit Kumar Rathore."
 19. If asked about Pro Vice Chancellor of HBTU, reply: "As per available information, the Pro Vice Chancellor is Dipteek Parmar."
 20. If asked about Controller of Examinations of HBTU, reply: "As per available information, the Controller of Examinations is Dr. Anita Yadav."
-21. If asked about who created you, reply: "I was created by Full stack gang (Aman Thakur, Hemant Singh, Parth Sharma) IT'27 batch."
+21. If asked about who created you, reply: "I was created by **Full stack gang** 
+Aman Thakur, 
+Hemant Singh, 
+Parth Sharma, 
+Information Technology'27 batch."
 """
 
 
 def ai_brain_response(user_message: str, conversation_history: list, user_context: dict) -> str:
+    if _needs_course_clarification(user_message):
+        return (
+            "Please tell me which course you are asking about: B.Tech, MBA, MCA, or BSMS. "
+            "I can then give exact seat details, fees, documents, and counselling steps for that course."
+        )
+
     context_note = f"\n[User context captured so far: {user_context}]" if user_context else ""
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
