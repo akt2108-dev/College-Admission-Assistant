@@ -3,6 +3,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2 import pool
 import os
 import json
+import asyncio
 from threading import Lock
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
@@ -118,6 +119,17 @@ CREATE TABLE IF NOT EXISTS conversation_memory (
 );
 """
 
+_ENSURE_USER_QUERIES_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS user_queries (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(100),
+    message TEXT NOT NULL,
+    detected_intent VARCHAR(50),
+    session_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
 _table_ensured = False
 _table_ensure_lock = Lock()
 
@@ -130,7 +142,23 @@ def _ensure_memory_table():
         if _table_ensured:
             return
         execute_non_query(_ENSURE_TABLE_SQL)
+        execute_non_query(_ENSURE_USER_QUERIES_TABLE_SQL)
         _table_ensured = True
+
+
+async def log_user_query(user_id, message, detected_intent, session_id):
+    try:
+        _ensure_memory_table()
+        await asyncio.to_thread(
+            execute_non_query,
+            """
+            INSERT INTO user_queries (user_id, message, detected_intent, session_id)
+            VALUES (%s, %s, %s, %s);
+            """,
+            (user_id, message, detected_intent, session_id),
+        )
+    except Exception as exc:
+        print(f"User query logging failed: {exc}")
 
 
 def load_memory(user_id: str, default_factory):

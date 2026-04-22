@@ -10,6 +10,9 @@ The HBTU Counselling Assistant Chatbot is a web-based admission guidance system 
 - Multi-turn branch prediction workflow (rank, category, quota)
 - An MBA admission knowledge module (2026-27)
 - An LLM fallback layer for conversational handling
+- Non-blocking user query logging in PostgreSQL (with intent + session tracking)
+- Clickable, styled hyperlink rendering in chat responses
+- Improved intent disambiguation to reduce false counselling triggers
 
 After reviewing the full repository, this report documents the current implementation as it exists in code, including runtime behavior, architecture, strengths, and limitations.
 
@@ -54,14 +57,17 @@ Students and parents often struggle to navigate admission counselling due to fra
   - Main FastAPI app
   - Intent routing
   - Prediction, seats, counselling, MBA, and AI fallback flows
+  - Async /chat flow with background query logging
 - backend/db.py
   - PostgreSQL connection pooling
   - Query helpers
   - Conversation memory persistence
+  - Auto-created user_queries table + async logging helper
 - backend/mba_knowledge.py
   - MBA knowledge base and keyword-intent detector
 - backend/ai_brain.py
   - Groq LLM fallback (llama-3.3-70b-versatile)
+  - Strict prompt governance for canonical HBTU links and administrative roles
 - backend/utils.py
   - Category builder helper
 
@@ -70,6 +76,7 @@ Students and parents often struggle to navigate admission counselling due to fra
 - backend/frontend/index.html
   - Complete UI and client logic in one page
   - Rich cards, chips, typing indicator, streaming typewriter effect
+  - Safe URL linkification with dedicated link styling
 - backend/frontend/config.js
   - Runtime API base configuration
 - backend/frontend/images/hbtumitr-logo.png
@@ -128,6 +135,7 @@ Implemented endpoints:
   - Direct seat lookup endpoint
 - POST /chat
   - Primary conversational endpoint for UI
+  - Accepts user_id, user_message, and optional session_id
 
 ### 6.2 Intent Routing Strategy
 
@@ -142,6 +150,8 @@ Additional layers:
 
 - MBA intent detection runs early via detect_mba_intent
 - AI fallback (ai_brain_response) handles unknown or ambiguous queries
+- Token-safe short-keyword matching in intent scoring avoids false positives
+  (example: "st" no longer matches inside "hostels")
 
 ### 6.3 Branch Prediction Logic
 
@@ -175,6 +185,20 @@ Conversation memory design:
 
 This is a practical reliability feature: chat state can continue even when memory writes to DB are temporarily unavailable.
 
+### 6.6 User Query Logging and Observability
+
+The chatbot now logs user messages into PostgreSQL using a dedicated table:
+
+- Table: user_queries
+- Columns: id, user_id, message, detected_intent, session_id, created_at
+- Table creation is automatic at runtime (CREATE TABLE IF NOT EXISTS)
+
+Logging behavior:
+
+- /chat resolves intent first, then schedules logging in the background
+- Logging is non-blocking (chat response does not wait for DB insert)
+- Failures are isolated (logging errors do not crash or block chat flow)
+
 ---
 
 ## 7. MBA Module (New Functional Area)
@@ -195,7 +219,9 @@ backend/ai_brain.py integrates Groq chat completions with a constrained system p
 
 - Focused domain: HBTU admissions and counselling
 - Refuses out-of-scope content
-- Advises not to fabricate cutoffs or fees
+- Advises not to fabricate cutoffs, fees, dates, or administrative designations
+- Enforces canonical HBTU URL usage for official links
+- Includes specific role responses for VC, Dean, Registrar, Pro VC, and Controller of Examinations
 
 Configured model:
 
@@ -219,6 +245,8 @@ Implemented UX features:
 - Clear chat and minimize controls
 - API base selection via config.js or runtime origin fallback
 - HTML escaping for safe rendering (escapeHtml, safeMultilineHtml)
+- Automatic clickable URL conversion in message text (http/https/www)
+- Link-only color styling for better readability
 
 Deployment telemetry scripts are also present (Vercel insights/speed scripts).
 
@@ -254,6 +282,8 @@ Deployment telemetry scripts are also present (Vercel insights/speed scripts).
 - Configurable CORS allowlist
 - Connection pooling for PostgreSQL
 - UI-side HTML escaping before rendering
+- Background logging failure isolation (chat remains responsive)
+- User query audit records (intent + session_id + timestamp)
 - .env ignored in Git, with tracked .env.example
 
 ### Not Yet Implemented
@@ -277,9 +307,14 @@ Deployment telemetry scripts are also present (Vercel insights/speed scripts).
    No active automated tests are present in the current repository state.
 
 4. Intent handling edge cases:
-   Keyword scoring is practical but can still be brittle for highly ambiguous user text.
+  Keyword scoring has been improved with token-safe checks, but highly ambiguous
+  mixed-intent prompts can still be misrouted.
 
-5. External dependency risk:
+5. Logging observability gap:
+  Query logging exists in DB, but no dashboard, retention policy, or analytics layer
+  is currently implemented.
+
+6. External dependency risk:
    AI fallback quality and availability depend on Groq API and valid API key configuration.
 
 ---
@@ -289,8 +324,10 @@ Deployment telemetry scripts are also present (Vercel insights/speed scripts).
 1. Add repeatable DB migrations and seed/load scripts for cutoffs and seats.
 2. Add automated tests for intent classification, prediction flow transitions, and API response contracts.
 3. Add admission-year versioning for counselling knowledge blocks.
-4. Add backend rate limiting and request-level logging.
-5. Add admin tooling for knowledge/data updates without code edits.
+4. Add backend rate limiting and request-level structured logging.
+5. Add a simple admin/reporting view for user_queries analytics (intent trends,
+   top query themes, session-level drill-down).
+6. Add admin tooling for knowledge/data updates without code edits.
 
 ---
 
@@ -302,6 +339,9 @@ The project is now more than a basic B.Tech counselling bot. It is a multi-modul
 - Counselling guidance with structured subtopics
 - MBA support
 - A robust conversational fallback path through LLM integration
+- Non-blocking query logging for production observability
+- Safer intent routing for non-counselling general queries
+- Verified official-link governance in AI fallback responses
 - A refined frontend experience designed for practical user guidance
 
 With data loading automation, testing, and governance improvements, this can evolve into a maintainable production-grade admission advisory platform.
@@ -310,11 +350,16 @@ With data loading automation, testing, and governance improvements, this can evo
 
 ## 15. References
 
-1. HBTU Admissions Portal: https://hbtu.admissions.nic.in
-2. HBTU Official Website: https://www.hbtu.ac.in
-3. FastAPI Documentation: https://fastapi.tiangolo.com
-4. Psycopg2 Documentation: https://www.psycopg.org/docs/
-5. Selenium Documentation: https://www.selenium.dev/documentation/
-6. Pandas Documentation: https://pandas.pydata.org/docs/
-7. Pydantic Documentation: https://docs.pydantic.dev
-8. Groq API Documentation: https://console.groq.com/docs
+1. HBTU Official Website: https://hbtu.ac.in/
+2. HBTU B.Tech Counselling Website: https://hbtu.admissions.nic.in/
+3. HBTU Admissions Website: https://erp.hbtu.ac.in/HBTUAdmissions.html
+4. HBTU Placement Statistics: https://hbtu.ac.in/training-placements/#PlacementStatistics
+5. HBTU Academics Circular: https://hbtu.ac.in/academic-circular/
+6. HBTU Academic Calendar: https://hbtu.ac.in/academic-calendar/
+7. HBTU Classes Time Table: https://hbtu.ac.in/time-table/
+8. FastAPI Documentation: https://fastapi.tiangolo.com
+9. Psycopg2 Documentation: https://www.psycopg.org/docs/
+10. Selenium Documentation: https://www.selenium.dev/documentation/
+11. Pandas Documentation: https://pandas.pydata.org/docs/
+12. Pydantic Documentation: https://docs.pydantic.dev
+13. Groq API Documentation: https://console.groq.com/docs

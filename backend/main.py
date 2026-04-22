@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from collections import defaultdict
-from db import execute_query, load_memory, save_memory, delete_memory
+from db import execute_query, load_memory, save_memory, delete_memory, log_user_query
 from mba_knowledge import detect_mba_intent, get_mba_response
 from ai_brain import ai_brain_response
 from utils import build_category
+import asyncio
 import logging
 import os
 import re
@@ -57,12 +58,16 @@ BRANCH_ALIASES = {
 
 
 def extract_branches(user_message: str) -> list[str]:
-    """Detect one or more canonical branch names from message."""
-    message = user_message.lower()
+    """Detect one or more canonical branch names from message using token-safe matching."""
+    message = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", user_message.lower())).strip()
+    padded_message = f" {message} "
     detected = []
     for canonical, aliases in BRANCH_ALIASES.items():
         for alias in aliases:
-            if alias in message:
+            norm_alias = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", alias.lower())).strip()
+            if not norm_alias:
+                continue
+            if f" {norm_alias} " in padded_message:
                 detected.append(canonical)
                 break
     return list(set(detected))
@@ -254,10 +259,16 @@ def detect_intent(user_message: str) -> str:
         ("certificate", 1), ("domicile", 1),
     ]
 
+    def _phrase_present(phrase: str) -> bool:
+        # Avoid false positives like "st" matching inside "hostels".
+        if len(phrase) <= 3 and phrase.isalpha():
+            return re.search(rf"\b{re.escape(phrase)}\b", message) is not None
+        return phrase in message
+
     def _score(keywords):
         total = 0
         for phrase, weight in keywords:
-            if phrase in message:
+            if _phrase_present(phrase):
                 total += weight
         return total
 
@@ -1294,13 +1305,15 @@ def get_seats(branch: str, year: int):
 # ─────────────────────────────────────────────
 
 @app.post("/chat")
-def chat(
+async def chat(
     user_id: str = Body(...),
-    user_message: str = Body(...)
+    user_message: str = Body(...),
+    session_id: str | None = Body(default=None),
 ):
     # ── Input sanitisation ───────────────────────────────────────────────────
     user_id = user_id.strip()[:MAX_USER_ID_LEN]
     user_message = user_message.strip()[:MAX_MESSAGE_LEN]
+    session_id = session_id.strip()[:100] if session_id else None
 
     if not user_id or not user_message:
         return build_ui_response(
@@ -1319,6 +1332,11 @@ def chat(
     extracted_branches = extract_branches(user_message)
     extracted_year     = extract_year(user_message)
     intent = detect_intent(user_message)
+
+    try:
+        asyncio.create_task(log_user_query(user_id, user_message, intent, session_id))
+    except Exception:
+        pass
 
 # ── MBA intent check (runs before all B.Tech routing) ────────────────────
     mba_intent, mba_confidence = detect_mba_intent(user_message)
@@ -1445,9 +1463,18 @@ def chat(
     # and caused messages like "Tell me your rank" when user asked about counselling.
     # They now only trigger when intent is "predict" or unknown (no clear other intent).
 
-    # If user typed just a branch name (e.g. "cse"), treat it as a seats request
+    # If user typed just a branch name (e.g. "cse"), treat it as seats request.
+    # Do not force unknown long queries (placements/facilities/etc.) into seats flow.
     if intent == "unknown" and extracted_branches:
-        intent = "seats"
+        message_lc = user_message.lower()
+        seat_cues = [
+            "seat", "seats", "seat matrix", "intake", "quota",
+            "distribution", "available seats", "seat count",
+        ]
+        has_seat_cue = any(cue in message_lc for cue in seat_cues)
+        short_branch_query = len(user_message.strip().split()) <= 3
+        if has_seat_cue or short_branch_query:
+            intent = "seats"
 
     # Continue prediction flow on follow-up messages even when the latest
     # message has no explicit prediction keywords (e.g. user replies "40000").
