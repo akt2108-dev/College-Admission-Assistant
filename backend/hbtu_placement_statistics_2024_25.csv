@@ -1,0 +1,111 @@
+row_id,sno,company_name,cse,it,ee,et,me,ce,che,pl,ot,pt,lt,be,ft,mca,msc_maths,mba,ctc_lpa,offers
+1,1,Effiya Technologies,1,,,,,,,,,,,,,,,,14.1,1
+2,2,Lummus Technology,,,,,,,2,,,,,,,,,,11.85,2
+3,3,Verroc,,,,,,,,2,,1,,,,,,,11.5,3
+4,4,Asian Paints,,,,,,,,,,4,,,,,,,12.08,4
+5,5,Mankiewicz India Pvt. Ltd.,,,,,,,,,,2,,,,,,,7,2
+6,6,Evalueserve,,,,,3,,2,2,,,,,1,,,,5,8
+7,7,ExxonMobil,,,,,,,1,,,,,,,,,,13.4,1
+8,8,Bajaj Indef,,1,1,1,2,,,,,,,,,,,,5,5
+9,9,Reliance Industries,,,4,,3,,21,1,,,,,,,,,8.5,29
+10,10,Samsung R&D Noida,,4,,,,,,,,,,,,,,,14.5,4
+11,11,Samsung Engineering,,,,,3,3,4,,,,,,,,,,8.5,10
+12,12,Adani Wilmar,,,,,,,1,,4,,,2,2,,,,7,9
+13,13,Xcedance,2,3,,,,,,,,,,,,2,,,7,7
+14,14,Maruti Suzuki,,,,,2,,,5,,12,,,,,,,10.75,19
+15,15,Dabur,,,,,2,,,,,,,,,,,,7.5,2
+16,16,Infinite Locus,9,8,,4,,,,,,,,,,2,,,6,23
+17,17,Jubilant Ingrevia,,,,,,,3,,,,,,,,,,8,3
+18,18,Atkins,,,3,,,,,,,,,,,,,,5.7,3
+19,19,Jaro Education,,,,,,,,1,1,,,1,,,,,8.58,3
+20,20,"DCM Shriram, Bharuch",,,,,2,,,,,,,,,,,,6.5,2
+21,21,Kloudrac,,,,1,,,,,,,,,,3,,,4.5,4
+22,22,ADM,,,,,,,,,3,,,,,,,,6.6,3
+23,23,Naini,,,2,,,,,,,,,,,,,,7,2
+24,24,L&T,,,6,,9,2,,,,,,,,,,,6.5,17
+25,25,IntelligenAI,,1,,,,,,,,,,,,,,,8,1
+26,26,Bajaj Auto,,,,,,,,,,3,,,,,,,9.46,3
+27,27,Josh Technologies,,1,,,,,,,,,,,,,,,13.23,1
+28,28,Samsung R&D Delhi,5,5,,4,,,,,,,,,,,,,15,14
+29,29,Unthinkable,1,1,,,,,,,,,,,,,,,5,2
+30,30,Indorama,,,,,,,4,,,,,,,,,,5.5,4
+31,31,Voltas water solutions,,,,2,2,,2,,,,,,,,,,5,6
+32,32,"DCM Shriram, Kota",,,,,1,,1,,,,,,,,,,7.97,2
+33,33,TCS (Ninja),17,21,1,6,1,1,,1,,,,,,13,1,,3.5,62
+34,,TCS (Digital),5,3,,3,,1,,,,,,,,,,,7.3,12
+35,,TCS (codevita)(Ninja),,1,,,,,,,,,,,,,,,3.5,2
+36,,TCS (codevita)(Digital),4,2,,,,,,,,,,,,,,,7.3,6
+37,34,Superhouse,,,,,,,,,,,,,1,,,,3.6,1
+38,35,Hovis Foods Pvt Ltd,,,,,,,,,,,,,1,,,,4.5,1
+39,36,MLA Industries,,,,,,,,1,,1,,,,,,,5.76,2
+40,37,SRF,,,1,2,1,,1,1,,,,,,,,,5,6
+41,38,PI Industries,,,,,,,4,,,,,,,,,,6.5,4
+42,39,Tata Advanced System Ltd.,,,,,,,1,,,,,,,,,,5,1
+43,40,Pakka Packaging,,,3,,2,,,,,,,,,,,,4.8,5
+44,41,LearnFlu,3,1,,2,,,,,2,,,1,2,6,5,,6,22
+45,42,Kribhco Fertilizers Ltd.,,,,,,,3,,,,,,,,,,8,3
+46,43,KEI Industries,,,1,,,1,1,1,,,,,,,,,4.2,4
+47,44,Cognizant,,1,,1,,1,,,,,,1,,,,,4.25,4
+48,45,Servosys Solution,2,5,,,,,,,,,,,,,,,6,7
+49,46,JSW Paints,,,,,1,,,,,3,,,,,,,6,4
+50,47,Havells,,,2,1,4,,,3,,,,,,,,,8.5,10
+51,48,TVS Motors,,,,,,,,,,2,,,,,,,8,2
+52,49,Patanjali Foods Ltd.,,,,,,,,,7,,,,2,,,,7,9
+53,50,Patanjali Ayurved Ltd.,,,,,,,3,,,,,,2,,,,7,5
+54,51,Physics Wallah,,,2,2,,,,,,,,1,1,,2,,7.5,8
+55,52,Zuari (Advantz),,,,1,,,,,,,,,,,,,5.5,1
+56,53,Planet Spark,1,,,,,,,,,,,,,,,,4.5,1
+57,54,Bhansali Engineering Polymers Ltd.,,,,,,,,4,,,,,,,,,3.6,4
+58,55,J&K Group,,,,,,,,,,,,,4,,,,6,4
+59,56,Aarti Industries,,,5,,,,11,,,,,,,,,,5.5,16
+60,57,Appversal,1,,,,,,,,,,,,,,,,7,1
+61,58,Carnation,,,,1,,,,,,,,,,,,,5.5,1
+62,59,FNZ Group,,2,,,,,,,,,,,,,,,15,2
+63,60,Himadri Speciality Chemical Ltd,,,,,,,4,,,1,,,,,,,7,5
+64,61,Surface Paints,,,,,,,,,,2,,,,,,,4,2
+65,62,Valence,,,,,1,,,,,,,,1,,,,5.5,2
+66,63,FareLabs,,,,3,,,1,,,,,1,1,,,,5,6
+67,64,J K Cement,,,2,,2,,,,,,,,,,,,6.1,4
+68,65,Shree Cement Ltd,,,2,,3,3,,,,,,,,,,,5.5,8
+69,66,Delloite,,1,,,,,,,,,,,,,,,8,1
+70,67,Godrej,,,,,,,,,3,,,,,,,,6.5,3
+71,68,B L Agro,,,,,,,,,5,,,,,,,,5,5
+72,69,Allen Pvt Ltd,,,,2,,,,,,,,3,,,,,4.5,5
+73,70,IndiaMart,,2,,,,,,,,,,,,,,,9.5,2
+74,71,Noida Power Company Ltd (NPCL),,,5,,,,,,,,,,,,,,7,5
+75,72,Maharani Paints,,,,,,,,,,2,,,,,,,6,2
+76,73,Acceldata,2,1,,,,,,,,,,,,,,,14,3
+77,74,Supreme Petrochem,,,,,,,,1,,,,,,,,,5,1
+78,75,NewLight Coachings (NEET Coaching),,,3,1,,,,1,,,,,,,,,5,5
+79,76,Peoplestrong,1,,1,,,,,,,,,,,,,,8,2
+80,77,Hero fincorp,3,2,,,,,,,,,,,,,,,7,5
+81,78,Nerolac Paints,,,,,,,,,,2,,,,,,,4.2,2
+82,79,Alok Batch Master,,,,,,,1,3,,,,,,,,,5,4
+83,80,Air Liquide,,,1,,1,,,,,,,,,,,,9.5,2
+84,81,Chambal fertilizers,,,,,2,,,,,,,,,,,,8,2
+85,82,Eureka Polychem Pvt Ltd,,,,,,,,1,,,,,,,,,5,1
+86,83,HytechPro,5,4,,1,,,,,,,,,,,,,5,10
+87,84,Manhindra Swaraj,,,,4,1,,,,,,,,,,,,4.2,5
+88,85,Berger Paints Pvt Ltd,,,,,,,2,2,,,,,,,,,5,4
+89,86,APL Apollo Tubes Limited,,,,,2,,,,,,,,,,,,6,2
+90,87,SSWL (Steel Strips Wheels Ltd),,,,,,,,,,7,,,,,,,6.5,7
+91,88,Voda Chemicals Pvt Ltd,,,,,,,3,,1,,,,1,,,,4.5,5
+92,89,Tata Autocomp System Ltd,,,,,,,,1,,1,,,,,,,5,2
+93,90,Rinex pvt Ltd,,,2,2,,,,3,2,1,,1,,1,,,10,12
+94,91,Honda Cars India Ltd,,,,,,,1,1,,1,,,,,,,6,3
+95,92,Intellipaat,1,1,,,,1,,,,,,,,2,,,9,5
+96,93,Technology and API Service Ltd,,,,,,,4,,,,,,,,,,3,4
+97,94,Corizo ltd,2,,1,1,2,1,1,,,,,,,2,,,6.5,10
+98,95,Rapid Engineering Coatings Pvt Ltd.,,,,,,,,,,2,,,,,,,4.53,2
+99,96,NCC Pvt Ltd,,,,,,3,,,,,,,,,,,3.2,3
+100,97,Torrent Power Limited,,,1,,,,,,,,,,,,,,4.5,1
+101,98,Lorrel pvt Ltd,,,,,,,1,,,,,,,,,,13,1
+102,99,Meesho Private Limited,,,,1,,,,,,,,,,,,,22,1
+103,100,"BuyFayi, Noida",,,,,,,,,,,1,,,,,,4,1
+104,101,"M/s Sabra Tannery, Jajmau, Kanpur",,,,,,,,,,,1,,,,,,4.5,1
+105,102,"Global Manufacturing , Noida",,,,,,,,,,,1,,,,,,4,1
+106,103,IBM,,,,,,,,,,,,,,1,,,9.25,1
+107,104,Gruner Renewable Energy Pvt Ltd,,,2,,4,1,,,,,,,,,,,5,7
+108,105,GLA University Mathura,3,2,,,,,,,,,,,,,,,6.5,5
+109,106,Metalware pvt Ltd,,,1,,,,1,,,,,,,,,,4.5,2
+110,107,Valence International,,,1,,1,1,,,1,,,,,,,,22,4

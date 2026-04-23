@@ -1,0 +1,69 @@
+SNo,CompanyName,Process,DateOfVisit,CSE,IT,EE,ET,ME,CE,CHE,PL,OT,PT,LT,BE,FT,MCA,MTech,MBA,MSc,Package_LPA,Total
+1,Exxon mobil,PPO,,,,,,,,1,,,,,,,,,,,13.5,1
+2,Hero Motocorp Ltd,PPO,,,,,,,,,1,,,,,,,,,,11.5,1
+3,Relience Industries Ltd,PPO,,,,,,2,,5,,,,,,,,,,,8.5,7
+4,Effiya (Quintics),OA/Algo Test/ PI,31-07-2025,2,,,,,,,,,,,,,,,,,14.5,2
+5,Josh Technology,OA/PI,28-08-2025,,1,,,,,,,,,,,,,,,,14,1
+6,Infinite Locus,OA/DSA/PI,12-08-2025,,1,,,,,,,,,,,,2,,,,6,3
+7,Varroc,OA/PI,14-08-2025,,,,,,,,3,,1,,,,,,,,12.5,4
+8,Inmobi,OA/PI/HR,22-08-2025,4,2,,,,,,,,,,,,,,,,20,6
+9,Unthinkable,OA/PI/HR,23-08-2025,1,,,,,,,,,,,,,,,,,8,1
+10,Bajaj Auto Ltd,OA/PI/HR,24-08-2025,,,,,,,,,,1,,,,,,,,9.5,1
+11,Samsung R&D Noida,OA/PI/HR,28-08-2025,3,4,,,,,,,,,,,,,,,,15.5,7
+12,TVS Motors,OA/PI/HR,04-09-2025,,,1,,2,,,,,2,,,,,,,,8,3
+13,Asian Paints,OA/PI/HR,09-09-2025,,,,,,,,,,2,,,,,,,,12.5,2
+14,Exxon Mobil,GD/PI/HR,13-09-2025,3,,2,2,1,,3,,,1,,,,,,,,13.5,12
+15,SRF,OA/PI/HR,15-06-2025,,,,,,,2,,,,,,,,,,,7,2
+16,Wipro Infrastructure,OA/PI/HR,16-09-2025,,,,,1,,,,,,,,,,,,,7.5,1
+17,JSW,OA/PI/HR,17-09-2025,,,,,3,,1,,,,,,,,,,,6.5,4
+18,Blogvault Pvt Ltd,OA/PI/HR,27-09-2025,1,,,,,,,,,,,,,,,,,12,1
+19,Sigmoid,OA/PI,30-09-2025,4,6,,,,,,,,,,,,,,,,8,10
+20,InteligenAI,OA/PI/HR,13-10-2025,,2,,,,,,,,,,,,,,,,8,2
+21,Meesho,OA/PI,13-10-2025,,,2,1,,,,,,,,,,,,,,17.5,3
+22,UPL,GD/PI,14-10-2025,,,,,,,2,,,,,,,,,,,11,2
+23,Yamaha,OA/GD/PI,15-10-2025,,,,,,,,,,4,,,,,,,,7.5,4
+24,Torrent Power Ltd,OA/PI,16-10-2025,,,1,,,,,,,,,,,,,,,4.5,1
+25,IBM Consulting,OA/PI/HR,17-10-2025,,1,,,,,,,,,,,,,,,,4.5,1
+26,Edu-versity,OA/PI/HR,22-10-2025,4,4,2,5,1,,1,,,,,,,1,,,3,8,21
+27,DCM Shriram,OA/PI/HR,27-10-2025,,,1,,,,,,,,,,,,,,,6.5,1
+28,Nyeras Edutech and Innovations Pvt. Ltd.,OA/PI/HR,04-10-2025,1,,3,,,2,,,,,,,,1,,,8,4,15
+29,Honda Cars Ltd,OA/PI/HR,06-11-2025,,,,,,,1,2,,3,,,,,,,,6,6
+30,Servosys,OA/PI/HR,11-11-2025,3,2,,,,,,,,,,,,,,,,6,5
+31,PI Industries,OA/PI/HR,18-11-2025,,,,,,,2,,,,,,,,,,,6.5,3
+32,ION group,OA/PI/HR,30-12-2025,,1,,,,,,,,,,,,,,,,17.5,1
+33,Hindustan Unilever Ltd,OA/PI/HR,27-11-2025,,,,,1,,,,,,,,,,,,,11.06,1
+34,Air Liqude,OA/PI/HR,20-01-2026,,,,1,1,,,,,,,,,,,,,8.5,2
+35,HPCL-Mittal Energy,OA/PI/HR,12-11-2025,,,,,,,3,,,,,,,,,,,9.25,3
+36,Alok Masterbatch,OA/PI/HR,26-11-2025,,,,,,,3,1,,,,,,,,,,5.5,4
+37,Ather Energy,OA/PI/HR,20-11-2025,,,,,,,,,,1,,,,,,,,10,1
+38,RCPL,OA/PI/HR,24-11-2025,,,1,,2,,,,,,,,2,,,,,9,5
+39,Aarati Industries,OA/PI/HR,24-11-2025,,,,,,,2,,,,,,,,,,,6.5,2
+40,Ericsson,OA/PI/HR,26-11-2025,,2,,,,,,,,,,,,,,,,8.15,2
+41,DCM Shriram Bharuch,OA/PI/HR,27-11-2025,,,,,,,3,,,,,,,,,,,7,3
+42,Havells Group,OA/PI/HR,27-11-2025,,,2,3,2,,,1,,,,,,,,,,9,8
+44,IndiaMart,OA/PI/HR,01-12-2025,1,,,,,,,,,,,,,,,,,12.5,1
+45,Hemraj Group,OA/PI/HR,03-12-2025,,,,,,,,,,,,1,1,,,,,12,2
+46,Tech bridge,OA/PI/HR,04-12-2025,,1,,,,,,,,,,,,,,,,5,1
+49,Coforge Pvt Ltd,OA/PI/HR,13-12-2025,2,4,,,,,,,,,,,,,,,,8.5,6
+50,Newgen Technologies,OA/PI/HR,15-12-2025,,,,,,,,,,,,,,1,,,,4.5,1
+51,J K Cement Pvt Ltd,OA/PI/HR,17-01-2026,,,,,,3,,,,,,,,,,,,6.1,3
+52,Marut Air System Pvt Ltd,OA/PI/HR,14-12-2025,,,,1,,,,,,,,,,,,,,4,1
+53,Shree Cement Pvt Ltd,OA/PI/HR,21-01-2026,,,2,1,,,2,,,,,,,,,,,5,5
+54,Larsen & Turbo (L&T) Ltd,OA/PI/HR,27-01-2026,,,6,,,,,,,,,,,,,,,6,3
+55,PSIT Kanpur,OA/PI/HR,10-12-2025,,,,,,,,,,,,,,,1,,,8.4,1
+56,To The New,OA/PI/HR,18-12-2025,,,,,,,,,,,,,,2,,,,6,2
+57,Super Smelters Limited,OA/PI/HR,19-12-2024,,,,,2,,,,,,,,,,,,,6.8,2
+58,AWL Agri business Ltd,OA/PI/HR,20-12-2025,,,,,,,1,,,,,,2,,,,,6.68,3
+59,IBM Software,OA/PI/HR,21-12-2025,,1,,,,,,,,,,,,,,,,9.25,1
+60,MLA group,OA/PI/HR,02-01-2026,,,,,,,,,,1,,,,,,,,4,1
+61,Noida Power Company Ltd (NPCL),OA/PI/HR,06-01-2026,,,6,,,,,,,,,,,,,,,7,6
+62,Lohia Group,OA/PI/HR,19-01-2026,,,,,1,,,,,,,,,,,,,6,1
+64,EXL,OA/PI/HR,09-01-2026,2,1,,,,,,,,,,,,,,,,10,3
+68,Acceldata,OA/PI/HR,14-01-2026,3,2,,,,,,,,,,,,,,,,15,5
+69,Motherson,OA/PI/HR,15-01-2026,,,,,,,,,,2,,,,,,,,4.44,2
+70,Epack,OA/PI/HR,16-01-2026,,,,,3,,,,,,,,,,,,,7,3
+71,Mother Dairy,GD/PI,17-01-2026,,,,3,2,,,,,,,,,,,,,5,5
+72,BSES,OA/PI/HR,19-12-2025,,,6,,,,,,,,,,,,,,,5,6
+73,JSS Noida,OA/PI/HR,23-01-2026,,,,,,,,,,,,,,,2,,,8.7,2
+74,J K Max Paints,OA/PI/HR,27-01-2026,,,,,,,,,,4,,,,,,,,6.1,4
+75,Rockman Industries Ltd,OA/PI/HR,23-01-2026,,,,,,,,,,4,,,,,,,,4.5,4
