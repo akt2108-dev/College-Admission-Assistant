@@ -1,4 +1,5 @@
 import csv
+import os
 import re
 import statistics
 from pathlib import Path
@@ -12,16 +13,65 @@ YEAR_TO_FILE = {
 }
 
 
+def _candidate_data_roots() -> list[Path]:
+    roots: list[Path] = []
+
+    env_root = os.getenv("PLACEMENT_DATA_DIR", "").strip()
+    if env_root:
+        roots.append(Path(env_root))
+
+    module_backend_dir = Path(__file__).resolve().parent
+    module_project_root = module_backend_dir.parent
+    cwd = Path.cwd()
+
+    roots.extend([
+        DATA_ROOT,
+        module_backend_dir,
+        module_project_root,
+        cwd,
+        cwd.parent,
+    ])
+
+    deduped: list[Path] = []
+    seen = set()
+    for root in roots:
+        try:
+            key = str(root.resolve())
+        except Exception:
+            key = str(root)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(root)
+    return deduped
+
+
+def _resolve_csv_path(filename: str) -> tuple[Path, list[str]]:
+    checked_paths: list[str] = []
+    for root in _candidate_data_roots():
+        candidate = root / filename
+        checked_paths.append(str(candidate))
+        if candidate.exists():
+            return candidate, checked_paths
+
+    fallback_root = _candidate_data_roots()[0] if _candidate_data_roots() else Path(".")
+    return fallback_root / filename, checked_paths
+
+
+def _total_loaded_records() -> int:
+    return sum(len(PLACEMENT_DATA_BY_YEAR.get(year, {}).get("records", [])) for year in AVAILABLE_YEARS)
+
+
 def get_placement_files_health() -> dict:
     """
     Verify configured placement CSV files are present and readable.
     Intended for startup/readiness checks in production.
     """
-    files = {"hbtu_placement_statistics_2024_25.csv": {}, "hbtu_placement_statistics_2025_26.csv": {}}
+    files = {}
     all_ok = True
 
     for year_label, filename in YEAR_TO_FILE.items():
-        file_path = DATA_ROOT / filename
+        file_path, checked_paths = _resolve_csv_path(filename)
         exists = file_path.exists()
         readable = False
         columns = []
@@ -49,6 +99,7 @@ def get_placement_files_health() -> dict:
         files[year_label] = {
             "ok": ok,
             "file": str(file_path),
+            "checked_paths": checked_paths,
             "exists": exists,
             "readable": readable,
             "columns": columns,
@@ -175,11 +226,13 @@ def _first_present_value(row: dict, keys: list[str]) -> str:
 
 
 def _load_year_data(year_label: str, filename: str) -> dict:
-    file_path = DATA_ROOT / filename
+    file_path, checked_paths = _resolve_csv_path(filename)
     if not file_path.exists():
         return {
             "year": year_label,
             "file": str(file_path),
+            "checked_paths": checked_paths,
+            "load_error": "File not found",
             "records": [],
             "raw_rows": [],
             "branch_columns": [],
@@ -236,6 +289,8 @@ def _load_year_data(year_label: str, filename: str) -> dict:
     return {
         "year": year_label,
         "file": str(file_path),
+        "checked_paths": checked_paths,
+        "load_error": None,
         "records": records,
         "raw_rows": raw_rows,
         "branch_columns": sorted(branch_columns_set),
@@ -679,6 +734,29 @@ def get_placement_response(user_message: str) -> dict:
             "data": {"subtopic": "placement"},
             "actions": [],
             "suggestions": [],
+        }
+
+    if _total_loaded_records() == 0:
+        health = get_placement_files_health()
+        return {
+            "message": (
+                "Placement data files are not loaded on the server right now, so accurate statistics "
+                "cannot be shown.\n\n"
+                "Please verify deployment includes both placement CSV files or set PLACEMENT_DATA_DIR "
+                "to the folder containing them.\n\n"
+                "Check startup health endpoint: /health/startup\n\n"
+                "Source: https://hbtu.ac.in/training-placements/#PlacementStatistics"
+            ),
+            "data": {
+                "subtopic": "placement_data_unavailable",
+                "available_years": AVAILABLE_YEARS,
+                "file_health": health,
+            },
+            "actions": [
+                {"label": "Placement Overview", "value": "Show placement statistics year-wise"},
+                {"label": "Companies Visited", "value": "Show companies visited year-wise"},
+                {"label": "Highest Package", "value": "Show highest package year-wise"},
+            ],
         }
 
     detected = detect_placement_intent(user_message)
