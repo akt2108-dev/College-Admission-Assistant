@@ -379,39 +379,35 @@ body::before{
 /* ── Chips ────────────────────────────────────── */
 #chips{padding:6px 14px 4px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
 
-.chips-row,
-.suggest-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
+@media (hover: hover) and (pointer: fine){
+  #chips{
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+
+  #chips::-webkit-scrollbar{
+    display:none;
+  }
 }
 
+.chips-shell,
+.chips-body,
+.action-group,
 .suggest-group{
   display:flex;
   flex-direction:column;
   gap:6px;
 }
 
-.action-group{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.suggest-head{
+.chips-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
 }
 
-.action-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
+.chips-label,
+.action-label,
 .suggest-label{
   font-size:.66rem;
   letter-spacing:.08em;
@@ -419,14 +415,11 @@ body::before{
   color:var(--muted);
 }
 
-.action-label{
-  font-size:.66rem;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
+.chips-label{
+  color:var(--gold-lt);
 }
 
-.suggest-toggle{
+.chips-toggle{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -441,43 +434,13 @@ body::before{
   transition:all .18s;
 }
 
-.action-toggle{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:28px;
-  height:28px;
-  padding:0;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.03);
-  color:var(--muted);
-  cursor:pointer;
-  transition:all .18s;
-}
-
-.suggest-toggle:hover{
+.chips-toggle:hover{
   color:var(--text);
   border-color:rgba(255,255,255,.16);
   background:rgba(255,255,255,.06);
 }
 
-.action-toggle:hover{
-  color:var(--text);
-  border-color:rgba(255,255,255,.16);
-  background:rgba(255,255,255,.06);
-}
-
-.suggest-toggle .chev{
-  width:8px;
-  height:8px;
-  border-right:1.6px solid currentColor;
-  border-bottom:1.6px solid currentColor;
-  transform:rotate(45deg) translateY(-1px);
-  transition:transform .18s ease;
-}
-
-.action-toggle .chev{
+.chips-toggle .chev{
   width:8px;
   height:8px;
   border-right:1.6px solid currentColor;
@@ -486,19 +449,18 @@ body::before{
   transition:transform .18s ease;
 }
 
-.suggest-toggle[aria-expanded="true"] .chev{
-  transform:rotate(225deg) translateY(-1px);
-}
-
-.action-toggle[aria-expanded="false"] .chev{
+.chips-toggle[aria-expanded="false"] .chev{
   transform:rotate(45deg) translateY(-1px);
 }
 
-.suggest-row[hidden]{
-  display:none;
+.chips-row,
+.suggest-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
 }
 
-.chips-row[hidden]{
+.chips-body[hidden]{
   display:none;
 }
 
@@ -869,8 +831,7 @@ const DEFAULT_ACTIONS = [
   { label: "📋 Counselling Process",  value: "Explain the counselling process" },
 ];
 
-let actionsExpanded = true;
-let suggestionsExpanded = false;
+let chipsExpanded = true;
 
 const PLACEMENT_FOLLOWUP_CHIPS = [
   { label: "Placement Overview", value: "Show placement statistics year-wise", kind: "action" },
@@ -1176,31 +1137,63 @@ function renderBotResponse(data) {
   scrollBottom();
 }
 
+/* ── Render chips helper ─────────────────────── */
+function buildChipsShell(chipsEl) {
+  chipsEl.innerHTML = "";
+
+  const shell = document.createElement("div");
+  shell.className = "chips-shell";
+
+  const head = document.createElement("div");
+  head.className = "chips-head";
+
+  const label = document.createElement("div");
+  label.className = "chips-label";
+  label.textContent = "Quick options";
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "chips-toggle";
+  toggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
+
+  const body = document.createElement("div");
+  body.className = "chips-body";
+
+  const syncToggle = () => {
+    toggle.setAttribute("aria-expanded", chipsExpanded ? "true" : "false");
+    toggle.setAttribute("aria-label", chipsExpanded ? "Collapse quick options" : "Expand quick options");
+    toggle.title = chipsExpanded ? "Collapse quick options" : "Expand quick options";
+    body.hidden = !chipsExpanded;
+  };
+
+  toggle.onclick = () => {
+    chipsExpanded = !chipsExpanded;
+    syncToggle();
+  };
+
+  syncToggle();
+  head.appendChild(label);
+  head.appendChild(toggle);
+  shell.appendChild(head);
+  shell.appendChild(body);
+  chipsEl.appendChild(shell);
+
+  return body;
+}
+
 function showDefaultChips() {
   const chipsEl = $("chips");
-  chipsEl.innerHTML = "";
+  const body = buildChipsShell(chipsEl);
 
   const actionGroup = document.createElement("div");
   actionGroup.className = "action-group";
-
-  const actionHead = document.createElement("div");
-  actionHead.className = "action-head";
 
   const actionLabel = document.createElement("div");
   actionLabel.className = "action-label";
   actionLabel.textContent = "Actions";
 
-  const actionToggle = document.createElement("button");
-  actionToggle.type = "button";
-  actionToggle.className = "action-toggle";
-  actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
-  actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
-  actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
-  actionToggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
-
   const row = document.createElement("div");
   row.className = "chips-row";
-  row.hidden = !actionsExpanded;
 
   DEFAULT_ACTIONS.forEach((a, i) => {
     const c = document.createElement("div");
@@ -1211,27 +1204,14 @@ function showDefaultChips() {
     row.appendChild(c);
   });
 
-  actionToggle.onclick = () => {
-    actionsExpanded = !actionsExpanded;
-    actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
-    actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
-    actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
-    row.hidden = !actionsExpanded;
-  };
-
-  actionHead.appendChild(actionLabel);
-  actionHead.appendChild(actionToggle);
-  actionGroup.appendChild(actionHead);
+  actionGroup.appendChild(actionLabel);
   actionGroup.appendChild(row);
-  chipsEl.appendChild(actionGroup);
+  body.appendChild(actionGroup);
 }
 
-/* ── Render chips helper ─────────────────────── */
 function renderChips(data) {
   const chipsEl = $("chips");
-  chipsEl.innerHTML = "";
-
-  const actions     = [...(data.actions || [])];
+  const actions = [...(data.actions || [])];
   const suggestions = [...(data.suggestions || [])];
 
   if (isPlacementResponse(data)) {
@@ -1258,28 +1238,18 @@ function renderChips(data) {
     return;
   }
 
+  const body = buildChipsShell(chipsEl);
+
   if (actions.length > 0) {
     const actionGroup = document.createElement("div");
     actionGroup.className = "action-group";
-
-    const actionHead = document.createElement("div");
-    actionHead.className = "action-head";
 
     const actionLabel = document.createElement("div");
     actionLabel.className = "action-label";
     actionLabel.textContent = "Actions";
 
-    const actionToggle = document.createElement("button");
-    actionToggle.type = "button";
-    actionToggle.className = "action-toggle";
-    actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
-    actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
-    actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
-    actionToggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
-
     const actionsRow = document.createElement("div");
     actionsRow.className = "chips-row";
-    actionsRow.hidden = !actionsExpanded;
 
     actions.forEach((a, i) => {
       const c = document.createElement("div");
@@ -1290,43 +1260,21 @@ function renderChips(data) {
       actionsRow.appendChild(c);
     });
 
-    actionToggle.onclick = () => {
-      actionsExpanded = !actionsExpanded;
-      actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
-      actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
-      actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
-      actionsRow.hidden = !actionsExpanded;
-    };
-
-    actionHead.appendChild(actionLabel);
-    actionHead.appendChild(actionToggle);
-    actionGroup.appendChild(actionHead);
+    actionGroup.appendChild(actionLabel);
     actionGroup.appendChild(actionsRow);
-    chipsEl.appendChild(actionGroup);
+    body.appendChild(actionGroup);
   }
 
   if (suggestions.length > 0) {
     const suggestGroup = document.createElement("div");
     suggestGroup.className = "suggest-group";
 
-    const suggestHead = document.createElement("div");
-    suggestHead.className = "suggest-head";
-
     const suggestLabel = document.createElement("div");
     suggestLabel.className = "suggest-label";
     suggestLabel.textContent = "Suggestions";
 
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "suggest-toggle";
-    toggle.setAttribute("aria-expanded", suggestionsExpanded ? "true" : "false");
-    toggle.setAttribute("aria-label", suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions");
-    toggle.title = suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions";
-    toggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
-
     const suggestRow = document.createElement("div");
     suggestRow.className = "suggest-row";
-    suggestRow.hidden = !suggestionsExpanded;
 
     suggestions.forEach((s, i) => {
       const c = document.createElement("div");
@@ -1337,19 +1285,9 @@ function renderChips(data) {
       suggestRow.appendChild(c);
     });
 
-    toggle.onclick = () => {
-      suggestionsExpanded = !suggestionsExpanded;
-      toggle.setAttribute("aria-expanded", suggestionsExpanded ? "true" : "false");
-      toggle.setAttribute("aria-label", suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions");
-      toggle.title = suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions";
-      suggestRow.hidden = !suggestionsExpanded;
-    };
-
-    suggestHead.appendChild(suggestLabel);
-    suggestHead.appendChild(toggle);
-    suggestGroup.appendChild(suggestHead);
+    suggestGroup.appendChild(suggestLabel);
     suggestGroup.appendChild(suggestRow);
-    chipsEl.appendChild(suggestGroup);
+    body.appendChild(suggestGroup);
   }
 }
 
@@ -1479,8 +1417,7 @@ async function sendMsg(override = null) {
 function clearChat() {
   const m = $("msgs");
   m.innerHTML = "";
-  actionsExpanded = true;
-  suggestionsExpanded = false;
+  chipsExpanded = true;
   addWelcome();
   showDefaultChips();
 }
