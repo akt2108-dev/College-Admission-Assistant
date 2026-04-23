@@ -38,10 +38,16 @@ body{
   font-family:var(--font-body);
   background:var(--bg);
   min-height:100vh;
+  min-height:100dvh;
   display:flex;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  overflow:auto;
 }
 
 /* ── Ambient background ──────────────────────── */
@@ -57,9 +63,10 @@ body::before{
 /* ── Chat shell ──────────────────────────────── */
 #app{
   position:relative;z-index:1;
-  width:460px;
-  height:90vh;
-  max-height:760px;
+  width:min(460px, 100%);
+  height:min(90vh, 760px);
+  max-height:min(760px, calc(100dvh - 24px));
+  min-height:0;
   display:flex;
   flex-direction:column;
   background:var(--surface);
@@ -78,6 +85,7 @@ body::before{
   padding:16px 18px 14px;
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:12px;
+  min-width:0;
   flex-shrink:0;
 }
 
@@ -99,8 +107,14 @@ body::before{
 }
 @keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--gold-dim)}50%{box-shadow:0 0 0 7px rgba(212,170,80,.04)}}
 
-.hdr-info h3{font-family:var(--font-display);font-size:.95rem;font-weight:500;color:var(--text);letter-spacing:.01em}
-.hdr-sub{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);margin-top:2px}
+.hdr-info h3{
+  font-family:var(--font-display);font-size:.95rem;font-weight:500;color:var(--text);letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.hdr-sub{
+  display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .hdr-dot{width:6px;height:6px;border-radius:50%;background:#4cca88;animation:blink 2s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
@@ -116,6 +130,7 @@ body::before{
 /* ── Messages ─────────────────────────────────── */
 #msgs{
   flex:1;overflow-y:auto;
+  min-height:0;
   padding:16px 14px 8px;
   display:flex;flex-direction:column;gap:4px;
   scroll-behavior:smooth;
@@ -144,7 +159,7 @@ body::before{
 }
 .av.usr{background:linear-gradient(135deg,#2a5080,#0e1e30);font-size:11px}
 
-.col{display:flex;flex-direction:column;max-width:82%}
+.col{display:flex;flex-direction:column;max-width:min(82%, 100%)}
 .col{min-width:0}
 .row.user .col{align-items:flex-end}
 
@@ -244,7 +259,7 @@ body::before{
 .row.user .ts{text-align:right}
 
 /* ── Typing ──────────────────────────────────── */
-#typing{display:none;align-items:flex-end;gap:8px;padding:4px 0}
+#typing{display:none;align-items:flex-end;gap:8px;padding:4px 14px 0;flex-shrink:0}
 #typing.on{display:flex;animation:pop .3s forwards}
 .tbl{
   background:rgba(255,255,255,.05);border:1px solid var(--border);
@@ -284,8 +299,12 @@ body::before{
 }
 .pred-branch-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
 .pred-branch{
+  display:inline-flex;
+  max-width:100%;
   padding:4px 10px;border-radius:20px;
   font-size:.76rem;font-weight:500;
+  white-space:normal;
+  word-break:break-word;
   border:1px solid;
 }
 
@@ -306,7 +325,7 @@ body::before{
 }
 .seat-header{
   background:var(--teal-dim);border-bottom:1px solid rgba(62,207,178,.15);
-  padding:10px 14px;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
 }
 .seat-title{font-family:var(--font-display);font-size:.9rem;font-weight:500;color:var(--teal)}
 .seat-total{font-size:.72rem;color:var(--muted)}
@@ -314,8 +333,8 @@ body::before{
 
 .seat-bars{padding:12px 14px 10px;display:flex;flex-direction:column;gap:8px}
 .seat-row{display:flex;flex-direction:column;gap:3px}
-.seat-row-top{display:flex;justify-content:space-between;align-items:center}
-.seat-row-label{font-size:.74rem;color:var(--text)}
+.seat-row-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.seat-row-label{font-size:.74rem;color:var(--text);flex:1;min-width:0;word-break:break-word}
 .seat-row-count{font-size:.72rem;color:var(--teal);font-weight:500}
 .seat-bar-bg{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
 .seat-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),#2a9a85);transition:width .6s cubic-bezier(.16,1,.3,1)}
@@ -358,7 +377,130 @@ body::before{
 .csl-body::-webkit-scrollbar-thumb{background:rgba(212,170,80,.2);border-radius:3px}
 
 /* ── Chips ────────────────────────────────────── */
-#chips{padding:6px 14px 4px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+#chips{padding:6px 14px 4px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+
+.chips-row,
+.suggest-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.suggest-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.action-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.suggest-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.action-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.suggest-label{
+  font-size:.66rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.action-label{
+  font-size:.66rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.suggest-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  padding:0;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03);
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .18s;
+}
+
+.action-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  padding:0;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03);
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .18s;
+}
+
+.suggest-toggle:hover{
+  color:var(--text);
+  border-color:rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
+}
+
+.action-toggle:hover{
+  color:var(--text);
+  border-color:rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
+}
+
+.suggest-toggle .chev{
+  width:8px;
+  height:8px;
+  border-right:1.6px solid currentColor;
+  border-bottom:1.6px solid currentColor;
+  transform:rotate(45deg) translateY(-1px);
+  transition:transform .18s ease;
+}
+
+.action-toggle .chev{
+  width:8px;
+  height:8px;
+  border-right:1.6px solid currentColor;
+  border-bottom:1.6px solid currentColor;
+  transform:rotate(225deg) translateY(-1px);
+  transition:transform .18s ease;
+}
+
+.suggest-toggle[aria-expanded="true"] .chev{
+  transform:rotate(225deg) translateY(-1px);
+}
+
+.action-toggle[aria-expanded="false"] .chev{
+  transform:rotate(45deg) translateY(-1px);
+}
+
+.suggest-row[hidden]{
+  display:none;
+}
+
+.chips-row[hidden]{
+  display:none;
+}
 
 .chip{
   padding:6px 12px;border-radius:20px;font-size:.76rem;
@@ -424,6 +566,233 @@ body::before{
 }
 .welcome h4{font-family:var(--font-display);font-size:.9rem;font-weight:500;color:var(--gold-lt);margin-bottom:5px}
 .welcome p{font-size:.78rem;color:var(--muted);line-height:1.55;font-weight:300}
+
+@media (max-width: 900px){
+  body{
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  #app{
+    width:min(100%, 560px);
+    height:min(calc(100dvh - 20px), 860px);
+    max-height:min(calc(100dvh - 20px), 860px);
+  }
+}
+
+@media (max-width: 640px){
+  body{
+    align-items:stretch;
+    padding:0;
+  }
+
+  #app{
+    width:100%;
+    height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+    box-shadow:none;
+  }
+
+  #hdr{
+    padding:14px 12px 12px;
+    gap:10px;
+  }
+
+  .hdr-avatar{
+    width:42px;
+    height:42px;
+  }
+
+  .hdr-info{
+    min-width:0;
+    flex:1;
+  }
+
+  .hdr-info h3{
+    font-size:.9rem;
+  }
+
+  .hdr-sub{
+    font-size:.68rem;
+  }
+
+  .hdr-btns{
+    gap:4px;
+  }
+
+  .ico-btn{
+    width:30px;
+    height:30px;
+  }
+
+  #msgs{
+    padding:14px 10px 6px;
+  }
+
+  #typing{
+    padding:4px 10px 0;
+  }
+
+  .row{
+    gap:6px;
+  }
+
+  .av{
+    width:28px;
+    height:28px;
+  }
+
+  .col{
+    max-width:calc(100% - 34px);
+  }
+
+  .bbl{
+    padding:9px 11px;
+    font-size:.8rem;
+  }
+
+  .pred-meta,
+  .pred-group,
+  .seat-header,
+  .seat-bars,
+  .csl-hdr,
+  .csl-body,
+  #chips,
+  #inp-area,
+  .welcome{
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .pred-meta{
+    gap:10px 16px;
+  }
+
+  .pred-meta-item{
+    min-width:calc(50% - 8px);
+  }
+
+  .pred-branch{
+    max-width:100%;
+  }
+
+  .chip{
+    max-width:100%;
+    text-align:center;
+  }
+
+  #chips{
+    max-height:132px;
+    overflow-y:auto;
+    padding-top:8px;
+    padding-bottom:4px;
+  }
+
+  #inp-area{
+    gap:8px;
+    padding-top:10px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+
+  #inp-wrap{
+    min-width:0;
+  }
+
+  #inp{
+    font-size:16px;
+  }
+}
+
+@media (max-width: 420px){
+  #hdr{
+    padding:12px 10px;
+  }
+
+  #msgs{
+    padding:12px 8px 6px;
+  }
+
+  .col{
+    max-width:calc(100% - 30px);
+  }
+
+  .pred-meta-item{
+    min-width:100%;
+  }
+
+  .seat-row-top{
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:flex-start;
+  }
+
+  .seat-row-label,
+  .seat-row-count{
+    font-size:.7rem;
+  }
+
+  .csl-body{
+    max-height:none;
+  }
+}
+
+@media (max-height: 560px){
+  body{
+    align-items:stretch;
+    padding:0;
+  }
+
+  #app{
+    width:100%;
+    height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+    box-shadow:none;
+  }
+
+  #hdr{
+    padding:12px 12px 10px;
+  }
+
+  #msgs{
+    padding:10px 10px 4px;
+  }
+
+  #typing{
+    padding:2px 10px 0;
+  }
+
+  #chips{
+    max-height:92px;
+    overflow-y:auto;
+    padding-top:6px;
+    padding-bottom:4px;
+  }
+
+  #inp-area{
+    padding-top:8px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-height: 561px) and (max-height: 760px){
+  body{
+    align-items:stretch;
+  }
+
+  #app{
+    height:min(calc(100dvh - 24px), 760px);
+    max-height:min(calc(100dvh - 24px), 760px);
+  }
+}
 </style>
 </head>
 <body>
@@ -499,6 +868,9 @@ const DEFAULT_ACTIONS = [
   { label: "💺 Seat Distribution",    value: "Show seat distribution" },
   { label: "📋 Counselling Process",  value: "Explain the counselling process" },
 ];
+
+let actionsExpanded = true;
+let suggestionsExpanded = false;
 
 const PLACEMENT_FOLLOWUP_CHIPS = [
   { label: "Placement Overview", value: "Show placement statistics year-wise", kind: "action" },
@@ -807,14 +1179,51 @@ function renderBotResponse(data) {
 function showDefaultChips() {
   const chipsEl = $("chips");
   chipsEl.innerHTML = "";
+
+  const actionGroup = document.createElement("div");
+  actionGroup.className = "action-group";
+
+  const actionHead = document.createElement("div");
+  actionHead.className = "action-head";
+
+  const actionLabel = document.createElement("div");
+  actionLabel.className = "action-label";
+  actionLabel.textContent = "Actions";
+
+  const actionToggle = document.createElement("button");
+  actionToggle.type = "button";
+  actionToggle.className = "action-toggle";
+  actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
+  actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
+  actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
+  actionToggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
+
+  const row = document.createElement("div");
+  row.className = "chips-row";
+  row.hidden = !actionsExpanded;
+
   DEFAULT_ACTIONS.forEach((a, i) => {
     const c = document.createElement("div");
     c.className = "chip action";
     c.textContent = a.label;
     c.style.animationDelay = `${i * 55}ms`;
     c.onclick = () => sendMsg(a.value);
-    chipsEl.appendChild(c);
+    row.appendChild(c);
   });
+
+  actionToggle.onclick = () => {
+    actionsExpanded = !actionsExpanded;
+    actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
+    actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
+    actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
+    row.hidden = !actionsExpanded;
+  };
+
+  actionHead.appendChild(actionLabel);
+  actionHead.appendChild(actionToggle);
+  actionGroup.appendChild(actionHead);
+  actionGroup.appendChild(row);
+  chipsEl.appendChild(actionGroup);
 }
 
 /* ── Render chips helper ─────────────────────── */
@@ -844,26 +1253,103 @@ function renderChips(data) {
     });
   }
 
-  actions.forEach((a, i) => {
-    const c = document.createElement("div");
-    c.className = "chip action";
-    c.textContent = a.label;
-    c.style.animationDelay = `${i * 55}ms`;
-    c.onclick = () => sendMsg(a.value || a.label);
-    chipsEl.appendChild(c);
-  });
-
-  suggestions.forEach((s, i) => {
-    const c = document.createElement("div");
-    c.className = "chip suggest";
-    c.textContent = s;
-    c.style.animationDelay = `${(actions.length + i) * 55}ms`;
-    c.onclick = () => sendMsg(s);
-    chipsEl.appendChild(c);
-  });
-
   if (actions.length === 0 && suggestions.length === 0) {
     showDefaultChips();
+    return;
+  }
+
+  if (actions.length > 0) {
+    const actionGroup = document.createElement("div");
+    actionGroup.className = "action-group";
+
+    const actionHead = document.createElement("div");
+    actionHead.className = "action-head";
+
+    const actionLabel = document.createElement("div");
+    actionLabel.className = "action-label";
+    actionLabel.textContent = "Actions";
+
+    const actionToggle = document.createElement("button");
+    actionToggle.type = "button";
+    actionToggle.className = "action-toggle";
+    actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
+    actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
+    actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
+    actionToggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
+
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "chips-row";
+    actionsRow.hidden = !actionsExpanded;
+
+    actions.forEach((a, i) => {
+      const c = document.createElement("div");
+      c.className = "chip action";
+      c.textContent = a.label;
+      c.style.animationDelay = `${i * 55}ms`;
+      c.onclick = () => sendMsg(a.value || a.label);
+      actionsRow.appendChild(c);
+    });
+
+    actionToggle.onclick = () => {
+      actionsExpanded = !actionsExpanded;
+      actionToggle.setAttribute("aria-expanded", actionsExpanded ? "true" : "false");
+      actionToggle.setAttribute("aria-label", actionsExpanded ? "Collapse actions" : "Expand actions");
+      actionToggle.title = actionsExpanded ? "Collapse actions" : "Expand actions";
+      actionsRow.hidden = !actionsExpanded;
+    };
+
+    actionHead.appendChild(actionLabel);
+    actionHead.appendChild(actionToggle);
+    actionGroup.appendChild(actionHead);
+    actionGroup.appendChild(actionsRow);
+    chipsEl.appendChild(actionGroup);
+  }
+
+  if (suggestions.length > 0) {
+    const suggestGroup = document.createElement("div");
+    suggestGroup.className = "suggest-group";
+
+    const suggestHead = document.createElement("div");
+    suggestHead.className = "suggest-head";
+
+    const suggestLabel = document.createElement("div");
+    suggestLabel.className = "suggest-label";
+    suggestLabel.textContent = "Suggestions";
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "suggest-toggle";
+    toggle.setAttribute("aria-expanded", suggestionsExpanded ? "true" : "false");
+    toggle.setAttribute("aria-label", suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions");
+    toggle.title = suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions";
+    toggle.innerHTML = `<span class="chev" aria-hidden="true"></span>`;
+
+    const suggestRow = document.createElement("div");
+    suggestRow.className = "suggest-row";
+    suggestRow.hidden = !suggestionsExpanded;
+
+    suggestions.forEach((s, i) => {
+      const c = document.createElement("div");
+      c.className = "chip suggest";
+      c.textContent = s;
+      c.style.animationDelay = `${(actions.length + i) * 55}ms`;
+      c.onclick = () => sendMsg(s);
+      suggestRow.appendChild(c);
+    });
+
+    toggle.onclick = () => {
+      suggestionsExpanded = !suggestionsExpanded;
+      toggle.setAttribute("aria-expanded", suggestionsExpanded ? "true" : "false");
+      toggle.setAttribute("aria-label", suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions");
+      toggle.title = suggestionsExpanded ? "Collapse suggestions" : "Expand suggestions";
+      suggestRow.hidden = !suggestionsExpanded;
+    };
+
+    suggestHead.appendChild(suggestLabel);
+    suggestHead.appendChild(toggle);
+    suggestGroup.appendChild(suggestHead);
+    suggestGroup.appendChild(suggestRow);
+    chipsEl.appendChild(suggestGroup);
   }
 }
 
@@ -993,6 +1479,8 @@ async function sendMsg(override = null) {
 function clearChat() {
   const m = $("msgs");
   m.innerHTML = "";
+  actionsExpanded = true;
+  suggestionsExpanded = false;
   addWelcome();
   showDefaultChips();
 }
@@ -1022,6 +1510,9 @@ $("inp").addEventListener("keydown", e => {
 
 window.addEventListener("DOMContentLoaded", () => {
   addWelcome();
+  showDefaultChips();
+  focusInputIfDesktop();
+  return;
   setTimeout(() => {
     renderBotResponse({
       type: "question",
@@ -1041,4 +1532,3 @@ window.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
-
