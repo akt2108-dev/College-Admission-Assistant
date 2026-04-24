@@ -8,7 +8,8 @@ from mba_knowledge import detect_mba_intent, get_mba_response
 from mca_knowledge import detect_mca_intent, get_mca_response
 from bsms_knowledge import detect_bsms_intent, get_bsms_response
 from placements_stats import get_placement_response, get_placement_files_health
-from ai_brain import ai_brain_response
+from ai_brain import ai_brain_response, localize_response_text
+from language_utils import detect_language_style, normalize_multilingual_query
 from utils import build_category
 import asyncio
 import logging
@@ -219,18 +220,24 @@ def extract_category(user_message: str) -> dict:
     Uses word-boundary matching to avoid false positives (e.g. 'first' → ST).
     """
     message = user_message.lower()
+    normalized = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", message)).strip()
+    padded = f" {normalized} "
+
+    def has_phrase(phrase: str) -> bool:
+        norm_phrase = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", phrase.lower())).strip()
+        return bool(norm_phrase) and f" {norm_phrase} " in padded
 
     base_category = None
 
-    if any(word in message for word in ["general", "gen", "open"]):
+    if any(has_phrase(word) for word in ["general", "gen", "open", "ur", "unreserved"]):
         base_category = "OPEN"
-    elif any(word in message for word in ["obc", "bc"]):
+    elif any(has_phrase(word) for word in ["obc", "obc ncl", "bc", "backward class"]):
         base_category = "BC"
-    elif re.search(r'\bsc\b', message):          # FIX: word boundary
+    elif any(has_phrase(word) for word in ["sc", "scheduled caste"]):
         base_category = "SC"
-    elif re.search(r'\bst\b', message):          # FIX: word boundary
+    elif any(has_phrase(word) for word in ["st", "scheduled tribe"]):
         base_category = "ST"
-    elif "ews" in message:
+    elif any(has_phrase(word) for word in ["ews", "economically weaker section"]):
         base_category = "EWS"
 
     girl = any(word in message for word in ["girl", "girls", "female", "woman"])
@@ -264,11 +271,110 @@ def memory_has_subcategory(memory: dict) -> bool:
 
 def is_no_subcategory_reply(user_message: str) -> bool:
     message = re.sub(r"\s+", " ", user_message.lower()).strip()
-    return message in {
+    if message in {
         "no", "none", "nope", "na", "n/a", "not applicable",
         "no subcategory", "no sub category", "none of these",
         "not any", "normal", "only base category",
-    }
+    }:
+        return True
+
+    return any(
+        phrase in message for phrase in [
+            "koi subcategory nahi", "koi sub category nahi", "sub category nahi",
+            "subcategory nahi", "koi nahi", "nahi hai", "nhi hai",
+            "sirf base category", "only base",
+        ]
+    )
+
+
+def should_reset_prediction_memory(
+    user_message: str,
+    detection_message: str,
+    memory: dict,
+    extracted_rank: int | None,
+    category_info: dict,
+    extracted_quota: str | None,
+) -> bool:
+    """
+    Reset stale prediction slots when user starts a fresh rank declaration
+    (common in Hinglish, e.g. "meri rank 43045 hai") without category/quota.
+    """
+    if not extracted_rank:
+        return False
+
+    if category_info.get("base_category") or extracted_quota or has_subcategory(category_info):
+        return False
+
+    if not (memory.get("base_category") or memory.get("quota") or memory_has_subcategory(memory)):
+        return False
+
+    msg = user_message.lower()
+    msg_norm = re.sub(r"\s+", " ", detection_message.lower()).strip()
+    rank_decl_cues = [
+        "my rank", "meri rank", "mera rank", "rank is", "rank hai", "air",
+    ]
+    short_rank_statement = len(msg_norm.split()) <= 8 and "rank" in msg_norm
+
+    return any(cue in msg for cue in rank_decl_cues) or short_rank_statement
+
+
+def prediction_prompt_text(prompt_key: str, language_style: str, **kwargs) -> str:
+    """Deterministic short prompts so Hinglish follow-ups don't drift in person/tense."""
+    rank = kwargs.get("rank")
+    base_category = kwargs.get("base_category")
+
+    if language_style == "hinglish":
+        if prompt_key == "ask_rank":
+            return (
+                "Please apni JEE Main CRL rank batayein taaki prediction start kar saken.\n\n"
+                "Note: category rank nahi, CRL rank bhejein."
+            )
+        if prompt_key == "ask_base_category":
+            return (
+                f"Aapki rank {rank} note ho gayi hai.\n\n"
+                "Aapki base category kya hai? (OPEN / BC / SC / ST / EWS)"
+            )
+        if prompt_key == "ask_subcategory":
+            return (
+                f"Aapki rank {rank} aur base category {base_category} note ho gayi hai.\n\n"
+                "Kya aap kisi sub-category se belong karte hain?"
+                " Aap Girl, PH/PwD, AF, FF, TFW, ya None type kar sakte hain."
+            )
+        if prompt_key == "ask_quota":
+            return (
+                f"Aapki rank {rank} aur category {base_category} note ho gayi hai.\n\n"
+                "Ab apna quota confirm karein:\n"
+                "1) Home State\n"
+                "2) All India\n\n"
+                "Aap 'Home State', 'All India', ya sirf 1/2 type kar sakte hain."
+            )
+
+    # English default (also used when style is hindi to keep prompts stable).
+    if prompt_key == "ask_rank":
+        return (
+            "Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n"
+            "Note: Please enter your CRL rank, not your category rank."
+        )
+    if prompt_key == "ask_base_category":
+        return (
+            f"I have your rank as {rank}.\n\n"
+            "Please tell me your base category (OPEN / BC / SC / ST / EWS). "
+            "After that, I will ask if any sub-category like Girl, PH, AF, FF, or TFW applies."
+        )
+    if prompt_key == "ask_subcategory":
+        return (
+            f"I have your rank as {rank} and base category as {base_category}.\n\n"
+            "Do you belong to any sub-category? You can type Girl, PH/PwD, AF, FF, TFW, or None."
+        )
+    if prompt_key == "ask_quota":
+        return (
+            f"I have your rank as {rank} and category as {base_category}.\n\n"
+            "Please confirm your quota:\n"
+            "1) Home State\n"
+            "2) All India\n\n"
+            "You can type 'Home State', 'All India', or just 1 or 2."
+        )
+    return ""
 
 
 def extract_quota(user_message: str) -> str | None:
@@ -469,7 +575,7 @@ def get_programs_response() -> str:
 
 def normalize_query_for_detection(user_message: str) -> str:
     """Normalize common typos/Hinglish/Hindi terms before rule-based detection."""
-    message = user_message.lower()
+    message = normalize_multilingual_query(user_message)
 
     replacements = {
         "placments": "placements",
@@ -1911,6 +2017,8 @@ async def chat(
             message="Please provide a valid message.",
         )
 
+    language_style = detect_language_style(user_message)
+
     # Load memory from DB (persists across restarts)
     memory = _load_chat_memory(user_id)
 
@@ -1926,6 +2034,17 @@ async def chat(
     intent = detect_intent(detection_message)
     course_scope = detect_course_scope(detection_message, extracted_branches)
 
+    if should_reset_prediction_memory(
+        user_message=user_message,
+        detection_message=detection_message,
+        memory=memory,
+        extracted_rank=extracted_rank,
+        category_info=category_info,
+        extracted_quota=extracted_quota,
+    ):
+        memory = EMPTY_MEMORY()
+        memory["rank"] = extracted_rank
+
     def log_route(final_route: str) -> None:
         try:
             asyncio.create_task(log_user_query(user_id, user_message, final_route, session_id))
@@ -1933,6 +2052,9 @@ async def chat(
             pass
 
     def respond(final_route: str, **kwargs):
+        should_localize = kwargs.pop("localize", True)
+        if should_localize and language_style != "english" and kwargs.get("response_type") != "error":
+            kwargs["message"] = localize_response_text(kwargs.get("message", ""), language_style)
         log_route(final_route)
         return build_ui_response(**kwargs)
 
@@ -1946,11 +2068,13 @@ async def chat(
             user_message=user_message,
             conversation_history=conversation_history,
             user_context=user_context,
+            language_style=language_style,
         )
         return respond(
             final_route,
             response_type="stream",
             message=ai_reply,
+            localize=False,
             actions=actions or [
                 {"label": "Predict My Branch", "value": "I want to predict my branch"},
                 {"label": "Seat Distribution", "value": "Show seat distribution"},
@@ -2188,11 +2312,13 @@ async def chat(
         return respond(
             "prediction_ask_subcategory",
             response_type="question",
-            message=(
-                f"I have your rank as {memory['rank']} and base category as "
-                f"{memory['base_category']}.\n\n"
-                "Do you belong to any sub-category? You can type Girl, PH/PwD, AF, FF, TFW, or None."
+            message=prediction_prompt_text(
+                "ask_subcategory",
+                language_style,
+                rank=memory["rank"],
+                base_category=memory["base_category"],
             ),
+            localize=False,
             actions=[
                 {"label": "None", "value": "None"},
                 {"label": "Girl", "value": "Girl"},
@@ -2263,14 +2389,13 @@ async def chat(
         return respond(
             "prediction_ask_quota",
             response_type="question",
-            message=(
-                f"I have your rank as {memory['rank']} and category as "
-                f"{memory['base_category']}.\n\n"
-                "Please confirm your quota:\n"
-                "1️⃣ Home State\n"
-                "2️⃣ All India\n\n"
-                "You can type 'Home State', 'All India', or just 1 or 2."
+            message=prediction_prompt_text(
+                "ask_quota",
+                language_style,
+                rank=memory["rank"],
+                base_category=memory["base_category"],
             ),
+            localize=False,
             actions=[
                 {"label": "Home State", "value": "Home State"},
                 {"label": "All India",  "value": "All India"},
@@ -2324,6 +2449,7 @@ async def chat(
             user_message=user_message,
             conversation_history=conversation_history,
             user_context=user_context,
+            language_style=language_style,
         )
 
         message_lc = detection_message.lower()
@@ -2381,6 +2507,7 @@ async def chat(
             "course_clarification_ai",
             response_type="stream",
             message=ai_reply,
+            localize=False,
             actions=clarify_actions,
         )
 
@@ -2390,11 +2517,12 @@ async def chat(
             return respond(
                 "prediction_ask_base_category",
                 response_type="question",
-                message=(
-                    f"I have your rank as {memory['rank']}.\n\n"
-                    "Please tell me your base category (OPEN / BC / SC / ST / EWS). "
-                    "After that, I will ask if any sub-category like Girl, PH, AF, FF, or TFW applies."
+                message=prediction_prompt_text(
+                    "ask_base_category",
+                    language_style,
+                    rank=memory["rank"],
                 ),
+                localize=False,
                 actions=[
                     {"label": "OPEN"}, {"label": "BC"},
                     {"label": "SC"},   {"label": "ST"}, {"label": "EWS"},
@@ -2405,10 +2533,8 @@ async def chat(
             return respond(
                 "prediction_ask_rank",
                 response_type="question",
-                message=(
-                    "Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n"
-                    "⚠️ Note: Please enter your CRL rank, not your category rank."
-                ),
+                message=prediction_prompt_text("ask_rank", language_style),
+                localize=False,
             )
 
     # ── Step 6: intent-specific flows ─────────────────────────────────────────
@@ -2516,12 +2642,14 @@ async def chat(
         user_message=user_message,
         conversation_history=conversation_history,
         user_context=user_context,
+        language_style=language_style,
     )
 
     return respond(
         "ai_fallback_general",
         response_type="stream",
         message=ai_reply,
+        localize=False,
         actions=[
             {"label": "🎯 Predict My Branch",   "value": "I want to predict my branch"},
             {"label": "💺 Seat Distribution",   "value": "Show seat distribution"},

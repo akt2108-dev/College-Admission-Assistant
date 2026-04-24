@@ -1,13 +1,40 @@
 from groq import Groq
 import os
 import re
+from language_utils import (
+    detect_language_style,
+    normalize_multilingual_query,
+    response_language_instruction,
+)
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
+def _feedback_ack_response(user_message: str) -> str | None:
+    """Return fixed acknowledgement text for passive feedback actions."""
+    message = normalize_multilingual_query(user_message).strip()
+
+    if message.startswith("report an issue") or " report an issue" in message:
+        return (
+            "Sorry you ran into this — I’m still in my testing phase, so issues can happen. Thanks for reporting it! I’ll make sure this gets looked into and improved soon."
+        )
+
+    if (
+        message.startswith("suggest improvement")
+        or message.startswith("suggest an improvement")
+        or " suggest improvement" in message
+        or " suggest an improvement" in message
+    ):
+        return (
+            "Thanks a lot for your feedback! I really appreciate you taking the time to help improve me. I’ll definitely consider your suggestion and work on getting better."
+        )
+
+    return None
+
+
 def _needs_course_clarification(user_message: str) -> bool:
     """Return True for common admission queries that don't specify course."""
-    message = user_message.lower()
+    message = normalize_multilingual_query(user_message)
 
     has_bsms = (
         re.search(r"\bbs\s*[- ]?\s*ms\b", message) is not None
@@ -72,21 +99,63 @@ Aman Thakur,
 Hemant Singh, 
 Parth Sharma, 
 Information Technology'27 batch."
+22. Understand English, Hindi, and Hinglish user messages. Match the user's language style unless the user explicitly asks for a different language.
 """
 
 
-def ai_brain_response(user_message: str, conversation_history: list, user_context: dict) -> str:
+def localize_response_text(message: str, language_style: str) -> str:
+    """Localize verified backend text without changing facts or markdown structure."""
+    if language_style == "english" or not message:
+        return message
+
+    instruction = response_language_instruction(language_style)
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You localize chatbot responses for HBTU admissions. "
+                        "Preserve every fact, number, rank, category code, URL, Markdown table, "
+                        "heading structure, and bullet structure. Do not add new information. "
+                        f"{instruction}"
+                    ),
+                },
+                {"role": "user", "content": message},
+            ],
+            max_tokens=1400,
+            temperature=0.1,
+        )
+        return response.choices[0].message.content
+    except Exception:
+        return message
+
+
+def ai_brain_response(
+    user_message: str,
+    conversation_history: list,
+    user_context: dict,
+    language_style: str | None = None,
+) -> str:
+    language_style = language_style or detect_language_style(user_message)
+    feedback_reply = _feedback_ack_response(user_message)
+    if feedback_reply:
+        return feedback_reply
+
     if _needs_course_clarification(user_message):
-        return (
+        return localize_response_text(
             "Please tell me which course you are asking about: B.Tech, MBA, MCA, or BSMS. "
-            "I can then give exact seat details, fees, documents, and counselling steps for that course."
+            "I can then give exact seat details, fees, documents, and counselling steps for that course.",
+            language_style,
         )
 
     context_note = f"\n[User context captured so far: {user_context}]" if user_context else ""
+    language_note = f"\n[Response language/style instruction: {response_language_instruction(language_style)}]"
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += conversation_history[-6:]  # last 3 turns
-    messages.append({"role": "user", "content": user_message + context_note})
+    messages.append({"role": "user", "content": user_message + context_note + language_note})
 
     try:
         response = client.chat.completions.create(
@@ -97,5 +166,15 @@ def ai_brain_response(user_message: str, conversation_history: list, user_contex
         )
         return response.choices[0].message.content
 
-    except Exception as e:
+    except Exception:
+        if language_style == "hindi":
+            return (
+                "\u092e\u0941\u091d\u0947 \u0905\u092d\u0940 \u0925\u094b\u0921\u093c\u0940 "
+                "\u0926\u093f\u0915\u094d\u0915\u0924 \u0939\u094b \u0930\u0939\u0940 "
+                "\u0939\u0948. \u0915\u0943\u092a\u092f\u093e rank prediction, seats, "
+                "\u092f\u093e counselling process \u0915\u0947 \u092c\u093e\u0930\u0947 "
+                "\u092e\u0947\u0902 \u092a\u0942\u091b\u0947\u0902."
+            )
+        if language_style == "hinglish":
+            return "Mujhe abhi thodi dikkat ho rahi hai. Please rank prediction, seats, ya counselling process ke baare mein puchhein."
         return "I'm having trouble right now. Please ask about rank prediction, seats, or counselling process."
