@@ -885,6 +885,14 @@ function safeMultilineHtml(value) {
   return linkifyEscapedHtml(escaped);
 }
 
+function openLinksInNewTab(rootEl) {
+  if (!rootEl) return;
+  rootEl.querySelectorAll("a[href]").forEach((link) => {
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+  });
+}
+
 function wrapScrollableTables(rootEl) {
   if (!rootEl) return;
   rootEl.querySelectorAll("table").forEach((table) => {
@@ -920,6 +928,7 @@ function addBubble(html, side) {
   bbl.className = `bbl ${side}`;
   if (side === "bot") {
     bbl.innerHTML = marked.parse(String(html || ""));
+    openLinksInNewTab(bbl);
     wrapScrollableTables(bbl);
   } else {
     bbl.textContent = String(html || "");
@@ -1340,6 +1349,7 @@ async function renderStreamResponse(data) {
       i = Math.min(i + CHARS_PER_TICK, message.length);
       const chunk = message.substring(0, i);
       bbl.innerHTML = marked.parse(chunk);
+      openLinksInNewTab(bbl);
       wrapScrollableTables(bbl);
       scrollBottom();
 
@@ -1352,6 +1362,7 @@ async function renderStreamResponse(data) {
 
   // Final pass: render full markdown after streaming completes.
   bbl.innerHTML = marked.parse(message);
+  openLinksInNewTab(bbl);
   wrapScrollableTables(bbl);
 
   // Show chips after stream finishes
