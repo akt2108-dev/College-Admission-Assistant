@@ -410,15 +410,16 @@ def detect_helpdesk_query(user_message: str) -> str | None:
         "who to call", "phone number", "mobile number", "call",
         "coordinator", "who is", "email", "reach out", "get in touch",
         "admission office", "number for", "contact for", "contact of",
-        "contact person", "contact details", "daa office", "dean",
-        "vc", "vice chancellor", "head of", "where is",
+        "contact person", "contact details", "daa office", "dean office",
+        "vc office", "vice chancellor office", "registrar office",
+        "head of", "where is",
     ]
     if not any(t in message for t in contact_triggers):
         return None
 
     if any(w in message for w in ["payment", "pay", "fee payment", "finance", "fao", "accountant", "refund query"]):
         return "payment"
-    if any(w in message for w in ["daa office", "vc", "vice chancellor", "head of", "dean of", "registrar office"]):
+    if any(w in message for w in ["daa office", "vc office", "vice chancellor office", "head of", "dean office", "registrar office"]):
         return "admin"
     if any(w in message for w in ["international", "foreign", "overseas"]):
         return "international"
