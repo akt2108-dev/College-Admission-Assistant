@@ -31,6 +31,44 @@ def _feedback_ack_response(user_message: str) -> str | None:
 
     return None
 
+def _personnel_direct_response(user_message: str) -> str | None:
+    """Return exact verified personnel answers before the LLM is consulted."""
+    message = normalize_multilingual_query(user_message).lower().strip()
+
+    personnel_rules = [
+        (
+            (r"\b(vc|vice chancellor)\b",),
+            ("hbtu" in message or "who" in message or "name" in message),
+            "As per available information, the Vice Chancellor of HBTU is Prof. Samsher.",
+        ),
+        (
+            (r"\bdean\b", r"\bdean of academic affairs\b"),
+            ("hbtu" in message or "who" in message or "name" in message),
+            "As per available information, the Dean is Prof. Vandana Dixit Kaushik.",
+        ),
+        (
+            (r"\bregistrar\b",),
+            ("hbtu" in message or "who" in message or "name" in message),
+            "As per available information, the Registrar is Amit Kumar Rathore.",
+        ),
+        (
+            (r"\bpro vice chancellor\b", r"\bpvc\b"),
+            ("hbtu" in message or "who" in message or "name" in message),
+            "As per available information, the Pro Vice Chancellor is Dipteek Parmar.",
+        ),
+        (
+            (r"\bcontroller of examinations?\b", r"\bcoe\b"),
+            ("hbtu" in message or "who" in message or "name" in message),
+            "As per available information, the Controller of Examinations is Dr. Anita Yadav.",
+        ),
+    ]
+
+    for patterns, allowed, response in personnel_rules:
+        if allowed and any(re.search(pattern, message) for pattern in patterns):
+            return response
+
+    return None
+
 
 def _needs_course_clarification(user_message: str) -> bool:
     """Return True for common admission queries that don't specify course."""
@@ -142,6 +180,10 @@ def ai_brain_response(
     feedback_reply = _feedback_ack_response(user_message)
     if feedback_reply:
         return feedback_reply
+
+    personnel_reply = _personnel_direct_response(user_message)
+    if personnel_reply:
+        return localize_response_text(personnel_reply, language_style)
 
     if _needs_course_clarification(user_message):
         return localize_response_text(
