@@ -118,7 +118,7 @@ body::before{
 .hdr-dot{width:6px;height:6px;border-radius:50%;background:#4cca88;animation:blink 2s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-.hdr-btns{margin-left:auto;display:flex;gap:6px}
+.hdr-btns{margin-left:auto;display:flex;gap:6px;position:relative}
 .ico-btn{
   width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
   background:rgba(255,255,255,.03);cursor:pointer;
@@ -126,6 +126,39 @@ body::before{
   color:var(--muted);font-size:14px;transition:all .2s;
 }
 .ico-btn:hover{background:var(--gold-dim);color:var(--gold);border-color:var(--border-gold)}
+
+.menu-wrap{position:relative}
+.menu-panel{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  min-width:190px;
+  padding:6px;
+  border-radius:12px;
+  border:1px solid var(--border-gold);
+  background:rgba(12,18,30,.98);
+  box-shadow:0 16px 36px rgba(0,0,0,.45);
+  display:none;
+  z-index:25;
+}
+.menu-panel.open{display:block;animation:pop .2s cubic-bezier(.16,1,.3,1) forwards}
+.menu-item{
+  width:100%;
+  border:none;
+  background:transparent;
+  color:var(--text);
+  text-align:left;
+  border-radius:8px;
+  padding:9px 10px;
+  font-size:.78rem;
+  font-family:var(--font-body);
+  cursor:pointer;
+  transition:background .18s,color .18s;
+}
+.menu-item:hover{
+  background:rgba(212,170,80,.16);
+  color:var(--gold-lt);
+}
 
 /* ── Messages ─────────────────────────────────── */
 #msgs{
@@ -377,7 +410,16 @@ body::before{
 .csl-body::-webkit-scrollbar-thumb{background:rgba(212,170,80,.2);border-radius:3px}
 
 /* ── Chips ────────────────────────────────────── */
-#chips{padding:6px 14px 4px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+#chips{
+  padding:8px 12px 6px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex-shrink:0;
+  border-top:1px solid rgba(212,170,80,.14);
+  border-bottom:1px solid rgba(212,170,80,.12);
+  background:linear-gradient(180deg,rgba(212,170,80,.06) 0%,rgba(11,19,34,.92) 38%,rgba(8,15,28,.96) 100%);
+}
 
 @media (hover: hover) and (pointer: fine){
   #chips{
@@ -396,15 +438,26 @@ body::before{
 .suggest-group{
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:3px;
+}
+
+.chips-shell{
+  border:1px solid rgba(212,170,80,.18);
+  border-radius:12px;
+  padding:8px;
+  background:linear-gradient(160deg,rgba(14,24,43,.9),rgba(8,16,30,.92));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.2);
 }
 
 .chips-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap:8px;
+  padding-bottom:3px;
 }
+
+.chips-body{padding-top:0}
 
 .chips-label,
 .action-label,
@@ -457,7 +510,7 @@ body::before{
 .suggest-row{
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
+  gap:5px;
 }
 
 .chips-body[hidden]{
@@ -465,7 +518,7 @@ body::before{
 }
 
 .chip{
-  padding:6px 12px;border-radius:20px;font-size:.76rem;
+  padding:5px 10px;border-radius:20px;font-size:.75rem;
   font-family:var(--font-body);font-weight:500;cursor:pointer;
   transition:all .18s;
   animation:cpop .25s cubic-bezier(.34,1.56,.64,1) forwards;
@@ -766,11 +819,17 @@ body::before{
     <div class="hdr-avatar"></div>
     <div class="hdr-info">
       <h3>HBTUMitr (AI Assistant)</h3>
-      <div class="hdr-sub"><div class="hdr-dot"></div>Available now</div>
+      <div class="hdr-sub"><div class="hdr-dot"></div>Beta Version</div>
     </div>
     <div class="hdr-btns">
       <div class="ico-btn" title="Clear chat" onclick="clearChat()">🗑</div>
-      <div class="ico-btn" title="Minimize" onclick="toggleMin()">−</div>
+      <div class="menu-wrap">
+        <button id="menu-btn" type="button" class="ico-btn" title="Feedback" aria-label="Open feedback menu" aria-haspopup="true" aria-expanded="false">☰</button>
+        <div id="feedback-menu" class="menu-panel" role="menu" aria-label="Feedback options">
+          <button type="button" class="menu-item" role="menuitem" onclick="startPassiveFeedback('issue')">Report an issue</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="startPassiveFeedback('improvement')">Suggest improvement</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -789,7 +848,7 @@ body::before{
   <!-- Input -->
   <div id="inp-area">
     <div id="inp-wrap">
-      <input id="inp" placeholder="Type your rank, category, quota…" autocomplete="off"/>
+      <input id="inp" placeholder="Ask in English, Hindi, or Hinglish..." autocomplete="off"/>
     </div>
     <button id="send" onclick="sendMsg()" title="Send">➤</button>
   </div>
@@ -1307,6 +1366,26 @@ function focusInputIfDesktop() {
   }
 }
 
+function closeFeedbackMenu() {
+  const menu = $("feedback-menu");
+  const btn = $("menu-btn");
+  if (!menu || !btn) return;
+  menu.classList.remove("open");
+  btn.setAttribute("aria-expanded", "false");
+}
+
+function startPassiveFeedback(type) {
+  const inp = $("inp");
+  const templates = {
+    issue: "Report an issue: ",
+    improvement: "Suggest improvement: ",
+  };
+  inp.value = templates[type] || "";
+  closeFeedbackMenu();
+  inp.focus();
+  inp.setSelectionRange(inp.value.length, inp.value.length);
+}
+
 /* ── Streaming typewriter for counselling replies ── */
 async function renderStreamResponse(data) {
   const message = data.message || "";
@@ -1428,17 +1507,10 @@ async function sendMsg(override = null) {
 function clearChat() {
   const m = $("msgs");
   m.innerHTML = "";
+  closeFeedbackMenu();
   chipsExpanded = true;
   addWelcome();
   showDefaultChips();
-}
-
-let minimized = false;
-function toggleMin() {
-  minimized = !minimized;
-  ["msgs","typing","chips","inp-area"].forEach(id => {
-    $(id).style.display = minimized ? "none" : "";
-  });
 }
 
 function addWelcome() {
@@ -1447,7 +1519,7 @@ function addWelcome() {
   w.className = "welcome";
   w.innerHTML = `
     <h4>Namaste! I'm HBTUMitr. 🙏</h4>
-    <p>I'm here to simplify your HBTU admission process. Ask me about fees structure, seat info, or counselling steps!</p>`;
+    <p>Ask me in English, Hindi, or Hinglish about HBTU admissions, fees, seats, placements, or counselling steps.</p>`;
   m.appendChild(w);
 }
 
@@ -1457,6 +1529,36 @@ $("inp").addEventListener("keydown", e => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
+  const menuBtn = $("menu-btn");
+  const menuPanel = $("feedback-menu");
+
+  if (menuBtn && menuPanel) {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = menuPanel.classList.contains("open");
+      if (isOpen) {
+        closeFeedbackMenu();
+        return;
+      }
+      menuPanel.classList.add("open");
+      menuBtn.setAttribute("aria-expanded", "true");
+    });
+
+    menuPanel.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener("click", () => {
+      closeFeedbackMenu();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeFeedbackMenu();
+      }
+    });
+  }
+
   addWelcome();
   showDefaultChips();
   focusInputIfDesktop();
