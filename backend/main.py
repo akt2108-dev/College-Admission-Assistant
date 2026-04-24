@@ -60,6 +60,108 @@ BRANCH_ALIASES = {
 }
 
 
+HELPDESK_CONTACTS = {
+    "ug_all": [
+        {"name": "Prof. Lalit Kumar Singh", "designation": "Dy. Coordinator", "topic": "All UG Courses", "mobile": "7081300565"},
+        {"name": "Prof. Vinay Pratap Singh", "designation": "Dy. Coordinator", "topic": "All UG Courses", "mobile": "9721456084"},
+    ],
+    "pg_all": [
+        {"name": "Dr. Amit Kumar Rathoure", "designation": "Dy. Coordinator", "topic": "All PG Courses", "mobile": "6389950713"},
+    ],
+    "btech": [
+        {"name": "Prof. Lalit Kumar Singh", "designation": "Dy. Coordinator", "topic": "All UG Courses", "mobile": "7081300565"},
+        {"name": "Prof. Vinay Pratap Singh", "designation": "Dy. Coordinator", "topic": "All UG Courses", "mobile": "9721456084"},
+        {"name": "Dr. Nand Kishore", "designation": "Asstt. Coordinator", "topic": "B.Tech & B.Tech (Working Professional)", "mobile": "8853038570"},
+        {"name": "Dr. Rajkamal Kushwaha", "designation": "Asstt. Coordinator", "topic": "B.Tech", "mobile": "7081300606"},
+    ],
+    "btech_lateral": [
+        {"name": "Mr. Gaurav Singh", "designation": "Asstt. Coordinator", "topic": "B.Tech Lateral Entry / NRI", "mobile": "7607489600"},
+    ],
+    "btech_wp": [
+        {"name": "Dr. Nand Kishore", "designation": "Asstt. Coordinator", "topic": "B.Tech (Working Professional)", "mobile": "8853038570"},
+    ],
+    "bba": [
+        {"name": "Dr. K.K. Bhartiya", "designation": "Asstt. Coordinator", "topic": "BBA", "mobile": "9696913773"},
+    ],
+    "bsms": [
+        {"name": "Dr. Shivam Shreevastava", "designation": "Asstt. Coordinator", "topic": "BS-MS", "mobile": "8527904993"},
+    ],
+    "bpharma": [
+        {"name": "Ms. Priyanka Mishra", "designation": "Asstt. Coordinator", "topic": "B.Pharma / B.Pharma Lateral Entry", "mobile": "9793886919"},
+    ],
+    "mca": [
+        {"name": "Dr. Siddharth Srivastava", "designation": "Asstt. Coordinator", "topic": "MCA", "mobile": "9455280244"},
+    ],
+    "mba": [
+        {"name": "Dr. Yogesh Puri", "designation": "Asstt. Coordinator", "topic": "MBA", "mobile": "8795838169"},
+    ],
+    "mtech": [
+        {"name": "Dr. Rajkamal Kushwaha", "designation": "Asstt. Coordinator", "topic": "M.Tech & Ph.D", "mobile": "7081300606"},
+        {"name": "Dr. Roma Agrahari", "designation": "Asstt. Coordinator", "topic": "M.Tech & Ph.D", "mobile": "7081300606"},
+    ],
+    "phd": [
+        {"name": "Dr. Rajkamal Kushwaha", "designation": "Asstt. Coordinator", "topic": "M.Tech & Ph.D", "mobile": "7081300606"},
+        {"name": "Dr. Roma Agrahari", "designation": "Asstt. Coordinator", "topic": "M.Tech & Ph.D", "mobile": "7081300606"},
+    ],
+    "msc": [
+        {"name": "Dr. Abhinav Srivastav", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Physics, Chemistry, Math)", "mobile": "6389950761"},
+        {"name": "Dr. Neeraj Mishra", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Biotechnology, Biochemistry)", "mobile": "8318891003"},
+    ],
+    "msc_physics": [{"name": "Dr. Abhinav Srivastav", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Physics, Chemistry, Math)", "mobile": "6389950761"}],
+    "msc_chemistry": [{"name": "Dr. Abhinav Srivastav", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Physics, Chemistry, Math)", "mobile": "6389950761"}],
+    "msc_maths": [{"name": "Dr. Abhinav Srivastav", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Physics, Chemistry, Math)", "mobile": "6389950761"}],
+    "msc_biotech": [{"name": "Dr. Neeraj Mishra", "designation": "Asstt. Coordinator", "topic": "M.Sc. (Biotechnology, Biochemistry)", "mobile": "8318891003"}],
+    "international": [
+        {"name": "Prof. Sanjiv Kumar", "designation": "Dean, International Student Affairs", "topic": "International / NRI Admission", "mobile": "7081300678"},
+    ],
+    "nri": [
+        {"name": "Mr. Gaurav Singh", "designation": "Asstt. Coordinator", "topic": "B.Tech Lateral Entry / NRI", "mobile": "7607489600"},
+        {"name": "Prof. Sanjiv Kumar", "designation": "Dean, International Student Affairs", "topic": "International / NRI Admission", "mobile": "7081300678"},
+    ],
+    "payment": [
+        {"name": "Mr. Pranjal Nagayach", "designation": "F&AO", "topic": "Payment Related", "mobile": "9721456003"},
+        {"name": "Mr. Sanjay Kumar Singh", "designation": "Assistant Accountant", "topic": "Payment Related", "mobile": "9721456070"},
+        {"name": "Yash Singh", "designation": "", "topic": "Payment Related", "mobile": "8299197019"},
+        {"name": "Kashika Sahil Taneja", "designation": "", "topic": "Payment Related", "mobile": "8303713728"},
+    ],
+    "admin": [
+        {"name": "Registrar", "designation": "Registrar", "topic": "Registrar Office", "mobile": "9721456027"},
+        {"name": "Mr. Sushil Kumar", "designation": "", "topic": "Administrative", "mobile": ""},
+    ],
+    "coordinator": [
+        {
+            "name": "Prof. Vandana Dixit Kaushik",
+            "designation": "Dean of Academic Affairs & Coordinator Admissions 2026",
+            "topic": "All Admission Queries",
+            "mobile": "9721456057 / 9554449900",
+            "email": "admission@hbtu.ac.in",
+        },
+    ],
+}
+
+
+ADMISSION_PROGRAMS_2026 = {
+    "programs": [
+        {"no": 1, "programme": "B.Tech.", "admission_through": "JEE Mains (2026)", "schedule": "May 2026"},
+        {"no": 2, "programme": "BS-MS (Mathematics and Data Science)", "admission_through": "JEE Mains (2026) / CUET-UG 2026", "schedule": "May 2026"},
+        {"no": 3, "programme": "B.Tech. (Lateral Entry)", "admission_through": "CUET-UG 2026", "schedule": "May 2026"},
+        {"no": 4, "programme": "B.Tech. - Biotechnology & B.Tech. - Biotechnology (Lateral Entry)", "admission_through": "CUET-UG 2026", "schedule": "May 2026"},
+        {"no": 5, "programme": "B.Pharm. & B.Pharm. (Lateral Entry)", "admission_through": "CUET-UG 2026", "schedule": "May 2026"},
+        {"no": 6, "programme": "BBA", "admission_through": "CUET-UG 2026", "schedule": "May 2026"},
+        {"no": 7, "programme": "MCA", "admission_through": "NIMCET 2026", "schedule": "May 2026"},
+        {"no": 8, "programme": "B.Tech. (Working Professional)", "admission_through": "UET 2026", "schedule": "May 2026"},
+        {"no": 9, "programme": "M.Tech.", "admission_through": "GATE / CUET-PG 2026 / UET 2026", "schedule": "Mid-April 2026"},
+        {"no": 10, "programme": "M.Sc.", "admission_through": "IIT JAM 2026 / GAT-B 2026 / CUET-PG 2026 / UET 2026", "schedule": "Mid-April 2026"},
+        {"no": 11, "programme": "PhD", "admission_through": "GATE / UGC (NET) / CSIR (NET) / UET 2026", "schedule": "Mid-April 2026"},
+        {"no": 12, "programme": "MBA", "admission_through": "CAT 2025 / CMAT 2026 / AIMA-MAT 2025-26 / CUET-PG 2026 / UET 2026*", "schedule": "Open from March 2026"},
+    ],
+    "note": "* UET 2026: The University Entrance Test 2026 will be conducted only if seats remain vacant.",
+    "apply_link": "https://erp.hbtu.ac.in/HBTUAdmissions.html",
+    "info_website": "www.hbtu.ac.in",
+    "contact_email": "admission@hbtu.ac.in",
+}
+
+
 def extract_branches(user_message: str) -> list[str]:
     """Detect one or more canonical branch names from message using token-safe matching."""
     message = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", user_message.lower())).strip()
@@ -131,11 +233,16 @@ def extract_category(user_message: str) -> dict:
     elif "ews" in message:
         base_category = "EWS"
 
-    girl = any(word in message for word in ["girl", "female"])
-    ph   = any(word in message for word in ["ph", "pwd", "disabled"])
-    af   = "af" in message or "armed forces" in message
-    ff   = "ff" in message or "freedom fighter" in message
-    tf   = "tfw" in message or "tuition fee waiver" in message
+    girl = any(word in message for word in ["girl", "girls", "female", "woman"])
+    ph = (
+        re.search(r"\bph\b|\bpwd\b", message) is not None
+        or any(word in message for word in ["disabled", "physically handicapped", "handicapped"])
+    )
+    af = re.search(r"\baf\b", message) is not None or any(
+        word in message for word in ["armed forces", "defence", "defense"]
+    )
+    ff = re.search(r"\bff\b", message) is not None or "freedom fighter" in message
+    tf = re.search(r"\btf\b|\btfw\b", message) is not None or "tuition fee waiver" in message
 
     return {
         "base_category": base_category,
@@ -144,6 +251,23 @@ def extract_category(user_message: str) -> dict:
         "af": af,
         "ff": ff,
         "tf": tf,
+    }
+
+
+def has_subcategory(category_info: dict) -> bool:
+    return any(category_info.get(key) for key in ["girl", "ph", "af", "ff", "tf"])
+
+
+def memory_has_subcategory(memory: dict) -> bool:
+    return any(memory.get(key) for key in ["girl", "ph", "af", "ff", "tf"])
+
+
+def is_no_subcategory_reply(user_message: str) -> bool:
+    message = re.sub(r"\s+", " ", user_message.lower()).strip()
+    return message in {
+        "no", "none", "nope", "na", "n/a", "not applicable",
+        "no subcategory", "no sub category", "none of these",
+        "not any", "normal", "only base category",
     }
 
 
@@ -166,6 +290,215 @@ def extract_quota(user_message: str) -> str | None:
         return "All India"
 
     return None
+
+
+def detect_helpdesk_query(user_message: str) -> str | None:
+    """
+    Returns a HELPDESK_CONTACTS key if the user is asking for
+    a contact/helpdesk person, else returns None.
+    """
+    message = re.sub(r"\s+", " ", user_message.lower()).strip()
+
+    contact_triggers = [
+        "contact", "helpdesk", "help desk", "whom to contact",
+        "who to call", "phone number", "mobile number", "call",
+        "coordinator", "who is", "email", "reach out", "get in touch",
+        "admission office", "number for", "contact for", "contact of",
+        "contact person", "contact details", "daa office", "dean",
+        "vc", "vice chancellor", "head of", "where is",
+    ]
+    if not any(t in message for t in contact_triggers):
+        return None
+
+    if any(w in message for w in ["payment", "pay", "fee payment", "finance", "fao", "accountant", "refund query"]):
+        return "payment"
+    if any(w in message for w in ["daa office", "vc", "vice chancellor", "head of", "dean of", "registrar office"]):
+        return "admin"
+    if any(w in message for w in ["international", "foreign", "overseas"]):
+        return "international"
+    if any(w in message for w in ["nri"]):
+        return "nri"
+    if any(w in message for w in ["mba"]):
+        return "mba"
+    if re.search(r"\bmca\b", message):
+        return "mca"
+    if any(w in message for w in ["bs-ms", "bsms", "bs ms", "mathematics and data science", "mds"]):
+        return "bsms"
+    if any(w in message for w in ["b.pharma", "b pharma", "bpharma", "pharma"]):
+        return "bpharma"
+    if any(w in message for w in ["bba"]):
+        return "bba"
+    if any(w in message for w in ["working professional", "b.tech wp", "btech wp"]):
+        return "btech_wp"
+    if any(w in message for w in ["lateral entry", "lateral"]):
+        return "btech_lateral"
+    if any(w in message for w in ["m.tech", "mtech"]):
+        return "mtech"
+    if any(w in message for w in ["ph.d", "phd", "doctorate"]):
+        return "phd"
+    if re.search(r"\bm\.?sc\b|\bmaster of science\b", message):
+        if any(w in message for w in ["biotech", "biochem"]):
+            return "msc_biotech"
+        if any(w in message for w in ["physics"]):
+            return "msc_physics"
+        if any(w in message for w in ["chemistry"]):
+            return "msc_chemistry"
+        if any(w in message for w in ["math", "maths"]):
+            return "msc_maths"
+        return "msc"
+    if any(w in message for w in ["b.tech", "btech", "jee", "ug course", "undergraduate"]):
+        return "btech"
+    if any(w in message for w in ["pg course", "postgraduate", "post graduate"]):
+        return "pg_all"
+    if any(w in message for w in ["admin", "registrar", "administrative"]):
+        return "admin"
+    if any(w in message for w in ["admission", "coordinator", "dean"]):
+        return "coordinator"
+    if any(w in message for w in ["ug", "under graduate"]):
+        return "ug_all"
+
+    return "coordinator"
+
+
+def _format_contacts(contacts: list[dict]) -> str:
+    lines = []
+    for c in contacts:
+        name_line = f"**{c['name']}**"
+        if c.get("designation"):
+            name_line += f" - {c['designation']}"
+        lines.append(name_line)
+        lines.append(f"  Phone: {c['mobile']}")
+        if c.get("email"):
+            lines.append(f"  Email: {c['email']}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def get_helpdesk_response(key: str) -> dict:
+    contacts = HELPDESK_CONTACTS.get(key, HELPDESK_CONTACTS["coordinator"])
+
+    topic_labels = {
+        "btech": "B.Tech Admission",
+        "btech_lateral": "B.Tech Lateral Entry / NRI",
+        "btech_wp": "B.Tech (Working Professional)",
+        "bsms": "BS-MS (Mathematics & Data Science)",
+        "bba": "BBA Admission",
+        "bpharma": "B.Pharma Admission",
+        "mca": "MCA Admission",
+        "mba": "MBA Admission",
+        "mtech": "M.Tech / Ph.D Admission",
+        "phd": "Ph.D Admission",
+        "msc": "M.Sc. Admission",
+        "msc_physics": "M.Sc. Physics / Chemistry / Math",
+        "msc_chemistry": "M.Sc. Physics / Chemistry / Math",
+        "msc_maths": "M.Sc. Physics / Chemistry / Math",
+        "msc_biotech": "M.Sc. Biotechnology / Biochemistry",
+        "international": "International / NRI Admission",
+        "nri": "NRI Admission",
+        "payment": "Payment / Fee Related",
+        "admin": "Administrative / Registrar",
+        "coordinator": "Admissions 2026-27 (Overall)",
+        "ug_all": "All UG Courses",
+        "pg_all": "All PG Courses",
+    }
+    label = topic_labels.get(key, "Admissions 2026-27")
+
+    message = (
+        "## HBTU Admissions Helpdesk 2026-27\n"
+        f"**Query: {label}**\n\n"
+        f"{_format_contacts(contacts)}\n\n"
+        "*Please contact during office hours: 10:00 AM - 5:00 PM*\n"
+        "For email queries: **admission@hbtu.ac.in**"
+    )
+
+    return {
+        "message": message,
+        "data": {"contacts": contacts, "topic": label},
+        "actions": [
+            {"label": "B.Tech Contact", "value": "Who to contact for B.Tech admission?"},
+            {"label": "MBA Contact", "value": "Who to contact for MBA admission?"},
+            {"label": "MCA Contact", "value": "Who to contact for MCA admission?"},
+            {"label": "Payment Help", "value": "Who to contact for payment issues?"},
+        ],
+        "suggestions": [
+            "Who to contact for BS-MS admission?",
+            "Who to contact for M.Tech admission?",
+            "Who is the admission coordinator for 2026?",
+        ],
+    }
+
+
+def detect_programs_query(user_message: str) -> bool:
+    """
+    Returns True when user is asking about the full list of programs,
+    admission routes, or the overall 2026-27 schedule.
+    """
+    message = user_message.lower()
+    triggers = [
+        "all courses", "all programs", "all programmes",
+        "programs offered", "programmes offered", "courses offered",
+        "admission brochure", "2026 brochure", "2026-27 brochure",
+        "which courses", "what courses", "list of courses",
+        "admission schedule 2026", "admission process 2026",
+        "how to apply 2026", "apply for admission 2026",
+        "tentative schedule", "admission through",
+        "jee mains 2026", "cuet 2026", "nimcet 2026",
+    ]
+    return any(t in message for t in triggers)
+
+
+def get_programs_response() -> str:
+    rows = []
+    for p in ADMISSION_PROGRAMS_2026["programs"]:
+        rows.append(
+            f"| {p['no']} | {p['programme']} | {p['admission_through']} | {p['schedule']} |"
+        )
+    table = "\n".join(rows)
+
+    return (
+        "## HBTU Admission Brochure 2026-27\n\n"
+        "| # | Programme | Admission Through | Tentative Schedule |\n"
+        "|---|---|---|---|\n"
+        f"{table}\n\n"
+        f"**Note:** {ADMISSION_PROGRAMS_2026['note']}\n\n"
+        f"**Apply at:** [{ADMISSION_PROGRAMS_2026['apply_link']}]({ADMISSION_PROGRAMS_2026['apply_link']})\n"
+        f"**Info:** {ADMISSION_PROGRAMS_2026['info_website']}\n"
+        f"**Email:** {ADMISSION_PROGRAMS_2026['contact_email']}"
+    )
+
+
+def normalize_query_for_detection(user_message: str) -> str:
+    """Normalize common typos/Hinglish/Hindi terms before rule-based detection."""
+    message = user_message.lower()
+
+    replacements = {
+        "placments": "placements",
+        "placment": "placement",
+        "comany": "company",
+        "vists": "visits",
+        "brouchere": "brochure",
+        "registartion": "registration",
+        "addmission": "admission",
+        "cetogry": "category",
+        "councelling": "counselling",
+        "counceling": "counselling",
+        "b.tec": "btech",
+        "b-tech": "btech",
+        "b tech": "btech",
+        "bs ms": "bsms",
+        "bs-ms": "bsms",
+        "ओ बी सी": "obc",
+        "ओबीसी": "obc",
+        "होम स्टेट": "home state",
+        "रैंक": "rank",
+        "फीस": "fees",
+        "btao": "tell me",
+        "kab hoga": "schedule",
+    }
+    for old, new in replacements.items():
+        message = message.replace(old, new)
+
+    return re.sub(r"\s+", " ", message).strip()
 
 
 def extract_year(user_message: str) -> int | None:
@@ -230,11 +563,14 @@ def detect_intent(user_message: str) -> str:
     PLACEMENT_KEYWORDS = [
         ("placement statistics", 6), ("placement stats", 6),
         ("placements", 5), ("placement", 5),
+        ("placement record", 6), ("recruiters", 5),
         ("median package", 6), ("average package", 6),
         ("highest package", 6), ("highest paying company", 6),
         ("highest package company", 6), ("highest package giving companies", 6),
         ("companies visited", 6), ("visited companies", 5),
+        ("top companies", 6), ("companies come", 6), ("company visits", 6),
         ("ctc", 4), ("package", 3), ("offers", 2),
+        ("stats", 2),
     ]
 
     COUNSELLING_KEYWORDS = [
@@ -265,6 +601,7 @@ def detect_intent(user_message: str) -> str:
         ("subcategory", 2), ("sub-category", 2), ("handicapped", 2), ("disabled", 2),
         ("defence", 2), ("freedom fighter", 2), ("girl reservation", 2),
         ("medical", 2), ("vision", 2), ("physically", 2),
+        ("brochure", 2), ("form date", 2), ("admission start", 2),
         # weak signals (1 pt)
         ("round", 1), ("process", 1), ("steps", 1), ("stages", 1),
         ("procedure", 1), ("timeline", 1), ("selection", 1),
@@ -326,7 +663,7 @@ def detect_course_scope(user_message: str, extracted_branches: list[str] | None 
         "mds program",
     ])
     has_explicit_btech = (
-        re.search(r"\bb\.?\s*tech\b", message) is not None
+        re.search(r"\bb\.?\s*tech\b|\bbtech\b|\bb\.?\s*tec\b", message) is not None
         or re.search(r"\bjee\b|\bcrl\b", message) is not None
     )
     # Branch mentions imply B.Tech only when non-B.Tech courses are not explicitly requested.
@@ -477,11 +814,19 @@ def is_prediction_followup(
     Decide whether an ambiguous message should continue prediction flow.
     This prevents generic chatter from hijacking into rank/category prompts.
     """
-    if extracted_rank or category_info.get("base_category") or extracted_quota:
+    if (
+        extracted_rank
+        or category_info.get("base_category")
+        or has_subcategory(category_info)
+        or extracted_quota
+    ):
         return True
 
     message = user_message.lower().strip()
-    if message in {"1", "2", "home state", "all india", "hs", "ai"}:
+    if message in {
+        "1", "2", "home state", "all india", "hs", "ai",
+        "no", "none", "nope", "na", "n/a", "not applicable",
+    }:
         return True
 
     prediction_keywords = [
@@ -1134,9 +1479,10 @@ COUNSELLING_DATA = {
 # ─────────────────────────────────────────────
 
 def run_prediction(rank, base_category, girl, ph, af, ff, tf, quota):
-    full_category = build_category(
+    category_candidates = build_category_lookup_values(
         base=base_category, girl=girl, ph=ph, af=af, ff=ff, tf=tf
     )
+    full_category = category_candidates[0]
 
     query = """
         WITH yearly_success AS (
@@ -1145,7 +1491,7 @@ def run_prediction(rank, base_category, girl, ph, af, ff, tf, quota):
                 year,
                 MAX(
                     CASE
-                        WHEN category = %s
+                        WHEN category = ANY(%s)
                          AND quota = %s
                          AND closing_rank >= %s
                         THEN 1 ELSE 0
@@ -1171,7 +1517,7 @@ def run_prediction(rank, base_category, girl, ph, af, ff, tf, quota):
         ORDER BY years_possible DESC;
     """
 
-    raw_results = execute_query(query, (full_category, quota, rank))
+    raw_results = execute_query(query, (category_candidates, quota, rank))
 
     grouped_results: dict[str, list] = {}
     for item in raw_results:
@@ -1193,6 +1539,32 @@ def run_prediction(rank, base_category, girl, ph, af, ff, tf, quota):
         grouped_results.setdefault(level, []).append(item["branch"])
 
     return full_category, grouped_results
+
+
+def build_category_lookup_values(base, girl=False, ph=False, af=False, ff=False, tf=False) -> list[str]:
+    """
+    Return category labels in the same shape as the cutoff database.
+    The source CSV stores OPEN+GIRL as "OPEN GIRL" and OPEN+TF as "OPEN (TF)",
+    while most other subcategories use parentheses, e.g. "BC(GIRL)".
+    """
+    base = base.strip().upper()
+
+    if ph:
+        return [f"{base}(PH)"]
+    if af:
+        return [f"{base}(AF)"]
+    if ff:
+        return [f"{base}(FF)"]
+    if tf:
+        if base == "OPEN":
+            return ["OPEN (TF)", "OPEN(TF)"]
+        return [f"{base}(TF)"]
+    if girl:
+        if base == "OPEN":
+            return ["OPEN GIRL", "OPEN(GIRL)"]
+        return [f"{base}(GIRL)"]
+
+    return [base]
 
 
 def format_chatbot_response(rank, category, quota, grouped_results) -> str:
@@ -1358,7 +1730,8 @@ EMPTY_MEMORY = lambda: {
     "ff": False,
     "tf": False,
     "quota": None,
-    # Tracks what we're waiting for so quota shortcut "1"/"2" is context-aware
+    "subcategory_asked": False,
+    # Tracks what we're waiting for so follow-up shortcuts are context-aware.
     "awaiting": None,
 }
 
@@ -1543,24 +1916,86 @@ async def chat(
 
     # ── Step 1: extract everything from the message ──────────────────────────
 
-    extracted_rank     = extract_rank(user_message)
-    category_info      = extract_category(user_message)
-    extracted_quota    = extract_quota(user_message)
-    extracted_branches = extract_branches(user_message)
-    extracted_year     = extract_year(user_message)
-    intent = detect_intent(user_message)
-    course_scope = detect_course_scope(user_message, extracted_branches)
+    detection_message = normalize_query_for_detection(user_message)
 
-    try:
-        asyncio.create_task(log_user_query(user_id, user_message, intent, session_id))
-    except Exception:
-        pass
+    extracted_rank     = extract_rank(detection_message)
+    category_info      = extract_category(detection_message)
+    extracted_quota    = extract_quota(detection_message)
+    extracted_branches = extract_branches(detection_message)
+    extracted_year     = extract_year(detection_message)
+    intent = detect_intent(detection_message)
+    course_scope = detect_course_scope(detection_message, extracted_branches)
+
+    def log_route(final_route: str) -> None:
+        try:
+            asyncio.create_task(log_user_query(user_id, user_message, final_route, session_id))
+        except Exception:
+            pass
+
+    def respond(final_route: str, **kwargs):
+        log_route(final_route)
+        return build_ui_response(**kwargs)
+
+    def ai_fallback_response(final_route: str, actions: list | None = None):
+        conversation_history = []
+        user_context = {
+            k: memory[k] for k in ("rank", "base_category", "quota")
+            if memory.get(k)
+        }
+        ai_reply = ai_brain_response(
+            user_message=user_message,
+            conversation_history=conversation_history,
+            user_context=user_context,
+        )
+        return respond(
+            final_route,
+            response_type="stream",
+            message=ai_reply,
+            actions=actions or [
+                {"label": "Predict My Branch", "value": "I want to predict my branch"},
+                {"label": "Seat Distribution", "value": "Show seat distribution"},
+                {"label": "Placement Stats", "value": "Show placement statistics year-wise"},
+                {"label": "B.Tech Counselling", "value": "Explain the counselling process"},
+                {"label": "MBA Admission", "value": "Tell me about MBA admission at HBTU"},
+                {"label": "MCA Admission", "value": "Tell me about MCA admission at HBTU"},
+                {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission at HBTU"},
+            ],
+        )
+
+    # Helpdesk/contact queries should answer before broader admission routing.
+    helpdesk_key = detect_helpdesk_query(detection_message)
+    if helpdesk_key:
+        hd = get_helpdesk_response(helpdesk_key)
+        return respond(
+            "helpdesk",
+            response_type="stream",
+            message=hd["message"],
+            data=hd["data"],
+            actions=hd["actions"],
+            suggestions=hd["suggestions"],
+        )
+
+    if detect_programs_query(detection_message):
+        return respond(
+            "admission_programs",
+            response_type="stream",
+            message=get_programs_response(),
+            data={"source": "admission_brochure_2026_27"},
+            actions=[
+                {"label": "B.Tech Counselling", "value": "Explain the B.Tech counselling process"},
+                {"label": "MBA Admission", "value": "Tell me about MBA admission"},
+                {"label": "MCA Admission", "value": "Tell me about MCA admission"},
+                {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission"},
+                {"label": "Admission Contacts", "value": "Who is the admission coordinator for 2026?"},
+            ],
+        )
 
     # Placement routing is independent of admission-course KB routing.
     # Handle it early so terms like MCA/MBA in placement queries don't divert.
     if intent == "placement":
         placement_payload = get_placement_response(user_message)
-        return build_ui_response(
+        return respond(
+            "placement",
             response_type="stream",
             message=placement_payload.get("message", "Placement information is unavailable right now."),
             data=placement_payload.get("data", {}),
@@ -1569,7 +2004,8 @@ async def chat(
         )
 
     if course_scope == "multiple":
-        return build_ui_response(
+        return respond(
+            "course_clarification_multiple",
             response_type="question",
             message=(
                 "I found multiple courses in your message. "
@@ -1585,18 +2021,14 @@ async def chat(
 
 # ── MBA intent check (runs before all B.Tech routing) ────────────────────
     if course_scope == "mba":
-        mba_intent, mba_confidence = detect_mba_intent(user_message)
+        mba_intent, mba_confidence = detect_mba_intent(detection_message)
         resolved_mba_intent = (
             mba_intent if (mba_intent and mba_confidence > 0.3)
-            else infer_course_specific_intent("mba", user_message)
+            else infer_course_specific_intent("mba", detection_message)
         )
         if resolved_mba_intent == "unknown":
-            return build_ui_response(
-                response_type="stream",
-                message=(
-                    "Please ask more specifically, for example: MBA eligibility, MBA fees, "
-                    "MBA seat matrix, MBA documents, or MBA counselling schedule."
-                ),
+            return ai_fallback_response(
+                "ai_fallback_mba_unknown",
                 actions=[
                     {"label": "MBA Eligibility", "value": "What is MBA eligibility?"},
                     {"label": "MBA Fees", "value": "What are MBA fees?"},
@@ -1604,7 +2036,8 @@ async def chat(
                     {"label": "MBA Schedule", "value": "Show MBA counselling schedule"},
                 ],
             )
-        return build_ui_response(
+        return respond(
+            f"mba_{resolved_mba_intent}",
             response_type="stream",
             message=get_mba_response(resolved_mba_intent),
             data={"subtopic": resolved_mba_intent, "title": "MBA Admission — HBTU"},
@@ -1625,18 +2058,14 @@ async def chat(
 
     # ── MCA intent check (runs before all B.Tech routing) ────────────────────
     if course_scope == "mca":
-        mca_intent, mca_confidence = detect_mca_intent(user_message)
+        mca_intent, mca_confidence = detect_mca_intent(detection_message)
         resolved_mca_intent = (
             mca_intent if (mca_intent and mca_confidence > 0.3)
-            else infer_course_specific_intent("mca", user_message)
+            else infer_course_specific_intent("mca", detection_message)
         )
         if resolved_mca_intent == "unknown":
-            return build_ui_response(
-                response_type="stream",
-                message=(
-                    "Please ask more specifically, for example: MCA eligibility, MCA fees, "
-                    "MCA seat matrix, MCA documents, or MCA counselling schedule."
-                ),
+            return ai_fallback_response(
+                "ai_fallback_mca_unknown",
                 actions=[
                     {"label": "MCA Eligibility", "value": "What is MCA eligibility?"},
                     {"label": "MCA Fees", "value": "What are MCA fees?"},
@@ -1649,7 +2078,8 @@ async def chat(
             "For updated guidelines, please check https://www.hbtu.ac.in and "
             "https://erp.hbtu.ac.in/HBTUAdmissions.html"
         )
-        return build_ui_response(
+        return respond(
+            f"mca_{resolved_mca_intent}",
             response_type="stream",
             message=get_mca_response(resolved_mca_intent) + mca_guidelines_note,
             data={"subtopic": resolved_mca_intent, "title": "MCA Admission — HBTU"},
@@ -1670,15 +2100,16 @@ async def chat(
 
     # ── BS-MS intent check (runs before all B.Tech routing) ─────────────────
     if course_scope == "bsms":
-        bsms_intent, bsms_confidence = detect_bsms_intent(user_message)
+        bsms_intent, bsms_confidence = detect_bsms_intent(detection_message)
         resolved_bsms_intent = (
             bsms_intent if (bsms_intent and bsms_confidence > 0.3)
-            else infer_course_specific_intent("bsms", user_message)
+            else infer_course_specific_intent("bsms", detection_message)
         )
         if resolved_bsms_intent == "unknown":
             resolved_bsms_intent = "bsms_general"
 
-        return build_ui_response(
+        return respond(
+            f"bsms_{resolved_bsms_intent}",
             response_type="stream",
             message=get_bsms_response(resolved_bsms_intent),
             data={
@@ -1700,12 +2131,8 @@ async def chat(
         )
 
     if course_scope == "btech" and intent == "unknown" and not extracted_branches:
-        return build_ui_response(
-            response_type="stream",
-            message=(
-                "Please ask more specifically, for example: B.Tech eligibility, B.Tech fees, "
-                "B.Tech seat matrix, B.Tech documents, or B.Tech counselling process."
-            ),
+        return ai_fallback_response(
+            "ai_fallback_btech_unknown",
             actions=[
                 {"label": "B.Tech Eligibility", "value": "What is the eligibility criteria?"},
                 {"label": "B.Tech Fees", "value": "What is the B.Tech fee structure?"},
@@ -1718,11 +2145,18 @@ async def chat(
     # FIX: quota shortcut was running unconditionally and being overwritten.
     # Now it only applies when we're specifically waiting for a quota answer.
     if memory["awaiting"] == "quota":
-        stripped = user_message.strip()
+        stripped = detection_message.strip()
         if stripped == "1":
             extracted_quota = "Home State"
         elif stripped == "2":
             extracted_quota = "All India"
+    elif memory["awaiting"] == "subcategory":
+        if is_no_subcategory_reply(detection_message):
+            memory["subcategory_asked"] = True
+            memory["awaiting"] = None
+        elif has_subcategory(category_info):
+            memory["subcategory_asked"] = True
+            memory["awaiting"] = None
 
     # ── Step 3: update memory with anything newly extracted ──────────────────
 
@@ -1731,15 +2165,43 @@ async def chat(
 
     if category_info["base_category"]:
         memory["base_category"] = category_info["base_category"]
-        memory["girl"] = category_info["girl"]
-        memory["ph"]   = category_info["ph"]
-        memory["af"]   = category_info["af"]
-        memory["ff"]   = category_info["ff"]
-        memory["tf"]   = category_info["tf"]
+
+    for subcategory_key in ["girl", "ph", "af", "ff", "tf"]:
+        if category_info[subcategory_key]:
+            memory[subcategory_key] = True
+            memory["subcategory_asked"] = True
+            if memory["awaiting"] == "subcategory":
+                memory["awaiting"] = None
 
     if extracted_quota:
         memory["quota"] = extracted_quota
         memory["awaiting"] = None   # quota received, clear the wait flag
+
+    if (
+        memory["rank"]
+        and memory["base_category"]
+        and not memory["subcategory_asked"]
+        and not memory_has_subcategory(memory)
+    ):
+        memory["awaiting"] = "subcategory"
+        _save_chat_memory(user_id, memory)
+        return respond(
+            "prediction_ask_subcategory",
+            response_type="question",
+            message=(
+                f"I have your rank as {memory['rank']} and base category as "
+                f"{memory['base_category']}.\n\n"
+                "Do you belong to any sub-category? You can type Girl, PH/PwD, AF, FF, TFW, or None."
+            ),
+            actions=[
+                {"label": "None", "value": "None"},
+                {"label": "Girl", "value": "Girl"},
+                {"label": "PH / PwD", "value": "PH"},
+                {"label": "AF", "value": "AF"},
+                {"label": "FF", "value": "FF"},
+                {"label": "TFW", "value": "TFW"},
+            ],
+        )
 
     # Persist updated memory to DB
     _save_chat_memory(user_id, memory)
@@ -1768,9 +2230,11 @@ async def chat(
                 user_id,
                 exc,
             )
+            log_route("prediction_db_unavailable")
             return _db_unavailable_response()
 
-        return build_ui_response(
+        return respond(
+            "prediction_result",
             response_type="prediction",
             message=format_chatbot_response(rank, full_category, quota, grouped_results),
             data={
@@ -1796,7 +2260,8 @@ async def chat(
     if memory["rank"] and memory["base_category"] and not memory["quota"]:
         memory["awaiting"] = "quota"
         _save_chat_memory(user_id, memory)
-        return build_ui_response(
+        return respond(
+            "prediction_ask_quota",
             response_type="question",
             message=(
                 f"I have your rank as {memory['rank']} and category as "
@@ -1820,7 +2285,7 @@ async def chat(
     # If user typed just a branch name (e.g. "cse"), treat it as seats request.
     # Do not force unknown long queries (placements/facilities/etc.) into seats flow.
     if intent == "unknown" and extracted_branches:
-        message_lc = user_message.lower()
+        message_lc = detection_message.lower()
         seat_cues = [
             "seat", "seats", "seat matrix", "intake", "quota",
             "distribution", "available seats", "seat count",
@@ -1835,19 +2300,21 @@ async def chat(
     prediction_in_progress = any([
         memory.get("rank"),
         memory.get("base_category"),
+        memory_has_subcategory(memory),
         memory.get("quota"),
+        memory.get("awaiting") == "subcategory",
         memory.get("awaiting") == "quota",
     ])
     if (
         intent == "unknown"
         and prediction_in_progress
         and is_prediction_followup(
-            user_message, extracted_rank, category_info, extracted_quota
+            detection_message, extracted_rank, category_info, extracted_quota
         )
     ):
         intent = "predict"
 
-    if should_clarify_course(user_message, intent, course_scope, extracted_branches):
+    if should_clarify_course(detection_message, intent, course_scope, extracted_branches):
         conversation_history = []
         user_context = {
             k: memory[k] for k in ("rank", "base_category", "quota")
@@ -1859,7 +2326,7 @@ async def chat(
             user_context=user_context,
         )
 
-        message_lc = user_message.lower()
+        message_lc = detection_message.lower()
         if any(k in message_lc for k in ["fee", "fees", "tuition", "cost"]):
             clarify_actions = [
                 {"label": "B.Tech Fees", "value": "What is the B.Tech fee structure?"},
@@ -1910,7 +2377,8 @@ async def chat(
                 {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
             ]
 
-        return build_ui_response(
+        return respond(
+            "course_clarification_ai",
             response_type="stream",
             message=ai_reply,
             actions=clarify_actions,
@@ -1919,11 +2387,13 @@ async def chat(
     if intent == "predict":  # ← ONLY prompt for rank when user explicitly wants prediction
 
         if memory["rank"] and not memory["base_category"]:
-            return build_ui_response(
+            return respond(
+                "prediction_ask_base_category",
                 response_type="question",
                 message=(
                     f"I have your rank as {memory['rank']}.\n\n"
-                    "Please tell me your category (OPEN / BC / SC / ST / EWS)."
+                    "Please tell me your base category (OPEN / BC / SC / ST / EWS). "
+                    "After that, I will ask if any sub-category like Girl, PH, AF, FF, or TFW applies."
                 ),
                 actions=[
                     {"label": "OPEN"}, {"label": "BC"},
@@ -1932,7 +2402,8 @@ async def chat(
             )
 
         if not memory["rank"]:
-            return build_ui_response(
+            return respond(
+                "prediction_ask_rank",
                 response_type="question",
                 message=(
                     "Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n"
@@ -1943,7 +2414,7 @@ async def chat(
     # ── Step 6: intent-specific flows ─────────────────────────────────────────
 
     if intent == "predict":
-        # Guide the user toward providing rank / category / quota
+        # Guide the user toward providing rank / category / sub-category / quota
         if extracted_rank and category_info["base_category"] and extracted_quota:
             msg = (
                 f"I detected your rank as {extracted_rank}, "
@@ -1959,16 +2430,17 @@ async def chat(
         elif extracted_rank:
             msg = (
                 f"I detected your rank as {extracted_rank}. "
-                "Please tell me your category and quota."
+                "Please tell me your base category (OPEN / BC / SC / ST / EWS), "
+                "sub-category if any (Girl / PH / AF / FF / TFW), and quota."
             )
         else:
             msg = (
-                "Please tell me your JEE Main CRL rank, category, and quota "
+                "Please tell me your JEE Main CRL rank, base category, sub-category if any, and quota "
                 "(Home State or All India).\n\n"
                 "⚠️ Note: Please enter your CRL (Common Rank List) rank, not your category rank."
             )
 
-        return build_ui_response(response_type="question", message=msg)
+        return respond("prediction_collect_missing", response_type="question", message=msg)
 
     # ── Seats intent ──────────────────────────────────────────────────────────
     # FIX: was split into two duplicate elif blocks — merged into one.
@@ -1985,8 +2457,10 @@ async def chat(
                     year,
                     exc,
                 )
+                log_route("seats_db_unavailable")
                 return _db_unavailable_response()
-            return build_ui_response(
+            return respond(
+                "seats_result",
                 response_type="seats",
                 message=format_seat_response(seat_data),
                 data=seat_data or {},
@@ -1997,7 +2471,8 @@ async def chat(
                 suggestions=["Show seats for IT", "Show seats for Mechanical", "Show seats for ECE", "Show seats for Civil"],
             )
         else:
-            return build_ui_response(
+            return respond(
+                "seats_ask_branch",
                 response_type="question",
                 message="Please tell me which branch you want seat details for.",
             )
@@ -2005,7 +2480,8 @@ async def chat(
 
     elif intent == "fees":
         info = COUNSELLING_DATA["fee_structure"]
-        return build_ui_response(
+        return respond(
+            "btech_fees",
             response_type="stream",
             message=info["message"],
             data={"subtopic": "fee_structure", "title": info["title"]},
@@ -2013,10 +2489,11 @@ async def chat(
         )
 
     elif intent == "counselling_info":
-        subtopic = detect_counselling_subtopic(user_message)
+        subtopic = detect_counselling_subtopic(detection_message)
         info     = COUNSELLING_DATA.get(subtopic, COUNSELLING_DATA["overview"])
 
-        return build_ui_response(
+        return respond(
+            f"btech_counselling_{subtopic}",
             response_type="stream",
             message=info["message"],
             data={"subtopic": subtopic, "title": info["title"]},
@@ -2041,7 +2518,8 @@ async def chat(
         user_context=user_context,
     )
 
-    return build_ui_response(
+    return respond(
+        "ai_fallback_general",
         response_type="stream",
         message=ai_reply,
         actions=[
