@@ -7,6 +7,7 @@ from db import execute_query, load_memory, save_memory, delete_memory, log_user_
 from mba_knowledge import detect_mba_intent, get_mba_response
 from mca_knowledge import detect_mca_intent, get_mca_response
 from bsms_knowledge import detect_bsms_intent, get_bsms_response
+from organizational_setup import detect_organizational_setup_query, get_organizational_setup_response
 from placements_stats import get_placement_response, get_placement_files_health
 from ai_brain import ai_brain_response, localize_response_text
 from language_utils import detect_language_style, normalize_multilingual_query
@@ -412,14 +413,14 @@ def detect_helpdesk_query(user_message: str) -> str | None:
         "admission office", "number for", "contact for", "contact of",
         "contact person", "contact details", "daa office", "dean office",
         "vc office", "vice chancellor office", "registrar office",
-        "head of", "where is",
+        "where is",
     ]
     if not any(t in message for t in contact_triggers):
         return None
 
     if any(w in message for w in ["payment", "pay", "fee payment", "finance", "fao", "accountant", "refund query"]):
         return "payment"
-    if any(w in message for w in ["daa office", "vc office", "vice chancellor office", "head of", "dean office", "registrar office"]):
+    if any(w in message for w in ["daa office", "vc office", "vice chancellor office", "dean office", "registrar office"]):
         return "admin"
     if any(w in message for w in ["international", "foreign", "overseas"]):
         return "international"
@@ -641,6 +642,20 @@ def detect_intent(user_message: str) -> str:
     """
     message = user_message.lower()
 
+    placement_person_cues = [
+        "placement head",
+        "placement officer",
+        "training and placement",
+        "training placement",
+        "training & placement",
+        "training and placement officer",
+        "placement coordinator",
+        "placement incharge",
+        "placement in-charge",
+    ]
+    if any(cue in message for cue in placement_person_cues):
+        return "unknown"
+
     # ── keyword → weight maps per intent ──────────────────────────────────
     # Higher-weight phrases are checked first via `in`; they are more specific.
 
@@ -669,7 +684,6 @@ def detect_intent(user_message: str) -> str:
 
     PLACEMENT_KEYWORDS = [
         ("placement statistics", 6), ("placement stats", 6),
-        ("placements", 5), ("placement", 5),
         ("placement record", 6), ("recruiters", 5),
         ("median package", 6), ("average package", 6),
         ("highest package", 6), ("highest paying company", 6),
@@ -2087,6 +2101,31 @@ async def chat(
             ],
         )
 
+    # Placement routing is independent of admission-course KB routing.
+    # Handle it early so terms like MCA/MBA in placement queries don't divert.
+    if intent == "placement":
+        placement_payload = get_placement_response(user_message)
+        return respond(
+            "placement",
+            response_type="stream",
+            message=placement_payload.get("message", "Placement information is unavailable right now."),
+            data=placement_payload.get("data", {}),
+            actions=placement_payload.get("actions", []),
+            suggestions=placement_payload.get("suggestions", []),
+        )
+
+    org_setup_detected = detect_organizational_setup_query(detection_message)
+    if org_setup_detected:
+        org_setup = get_organizational_setup_response(detection_message)
+        return respond(
+            "organizational_setup",
+            response_type="organizational_setup",
+            message=org_setup["message"],
+            data=org_setup.get("data", {}),
+            actions=org_setup.get("actions", []),
+            suggestions=org_setup.get("suggestions", []),
+        )
+
     # Helpdesk/contact queries should answer before broader admission routing.
     helpdesk_key = detect_helpdesk_query(detection_message)
     if helpdesk_key:
@@ -2113,19 +2152,6 @@ async def chat(
                 {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission"},
                 {"label": "Admission Contacts", "value": "Who is the admission coordinator for 2026?"},
             ],
-        )
-
-    # Placement routing is independent of admission-course KB routing.
-    # Handle it early so terms like MCA/MBA in placement queries don't divert.
-    if intent == "placement":
-        placement_payload = get_placement_response(user_message)
-        return respond(
-            "placement",
-            response_type="stream",
-            message=placement_payload.get("message", "Placement information is unavailable right now."),
-            data=placement_payload.get("data", {}),
-            actions=placement_payload.get("actions", []),
-            suggestions=placement_payload.get("suggestions", []),
         )
 
     if course_scope == "multiple":

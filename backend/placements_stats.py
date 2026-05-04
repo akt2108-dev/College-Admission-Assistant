@@ -502,7 +502,30 @@ def detect_placement_intent(user_message: str) -> dict:
     message = user_message.lower()
 
     placement_cues = [
-        "placement", "placements", "package", "ctc", "companies visited", "offers"
+        "placement statistics",
+        "placement stats",
+        "placement record",
+        "placement report",
+        "placement overview",
+        "placement details",
+        "placement data",
+        "year-wise placement",
+        "branch-wise placement",
+        "course-wise placement",
+        "companies visited",
+        "visited companies",
+        "company visits",
+        "highest package",
+        "highest paying company",
+        "highest package company",
+        "highest package giving companies",
+        "median package",
+        "average package",
+        "recruiters",
+        "ctc",
+        "package",
+        "offers",
+        "stats",
     ]
     is_placement = any(cue in message for cue in placement_cues)
 
