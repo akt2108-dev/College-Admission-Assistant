@@ -1,22 +1,27 @@
 from groq import Groq
 import os
 import re
+from dotenv import load_dotenv
 from language_utils import (
     detect_language_style,
     normalize_multilingual_query,
     response_language_instruction,
 )
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 
 def _feedback_ack_response(user_message: str) -> str | None:
     """Return fixed acknowledgement text for passive feedback actions."""
     message = normalize_multilingual_query(user_message).strip()
+    language_style = detect_language_style(user_message)
 
     if message.startswith("report an issue") or " report an issue" in message:
-        return (
+        return localize_response_text(
             "Sorry you ran into this — I’m still in my testing phase, so issues can happen. Thanks for reporting it! I’ll make sure this gets looked into and improved soon."
+            , language_style,
         )
 
     if (
@@ -25,8 +30,9 @@ def _feedback_ack_response(user_message: str) -> str | None:
         or " suggest improvement" in message
         or " suggest an improvement" in message
     ):
-        return (
+        return localize_response_text(
             "Thanks a lot for your feedback! I really appreciate you taking the time to help improve me. I’ll definitely consider your suggestion and work on getting better."
+            , language_style,
         )
 
     return None
@@ -87,6 +93,9 @@ def _needs_course_clarification(user_message: str) -> bool:
         re.search(r"\bmba\b", message) is not None
         or re.search(r"\bmca\b", message) is not None
         or re.search(r"\bb\.?\s*tech\b", message) is not None
+        or re.search(r"\bm\.?\s*sc\b|\bmsc\b", message) is not None
+        or re.search(r"\bm\.?\s*tech\b|\bmtech\b", message) is not None
+        or re.search(r"\bph\.?\s*d\b|\bphd\b", message) is not None
         or has_bsms
     )
     if has_explicit_course:
@@ -138,6 +147,7 @@ Hemant Singh,
 Parth Sharma, 
 Information Technology'27 batch."
 22. Understand English, Hindi, and Hinglish user messages. Match the user's language style unless the user explicitly asks for a different language.
+23. Language matching is strict: Hindi users must receive Hindi in Devanagari script only; Hinglish users must receive Roman-script Hinglish only; English users must receive English.
 """
 
 
@@ -157,6 +167,7 @@ def localize_response_text(message: str, language_style: str) -> str:
                         "You localize chatbot responses for HBTU admissions. "
                         "Preserve every fact, number, rank, category code, URL, Markdown table, "
                         "heading structure, and bullet structure. Do not add new information. "
+                        "The requested language/style is mandatory for the entire response. "
                         f"{instruction}"
                     ),
                 },
@@ -167,6 +178,16 @@ def localize_response_text(message: str, language_style: str) -> str:
         )
         return response.choices[0].message.content
     except Exception:
+        if language_style == "hindi":
+            return (
+                "मुझे अभी इस उत्तर को पूरी तरह हिंदी में बदलने में समस्या हो रही है। "
+                "कृपया अपना प्रश्न दोबारा पूछें या नवीनतम जानकारी के लिए https://hbtu.ac.in/ देखें।"
+            )
+        if language_style == "hinglish":
+            return (
+                "Mujhe abhi is answer ko Hinglish mein convert karne mein dikkat ho rahi hai. "
+                "Please apna question dobara puchhein ya latest info ke liye https://hbtu.ac.in/ check karein."
+            )
         return message
 
 
@@ -186,10 +207,21 @@ def ai_brain_response(
         return localize_response_text(personnel_reply, language_style)
 
     if _needs_course_clarification(user_message):
-        return localize_response_text(
-            "Please tell me which course you are asking about: B.Tech, MBA, MCA, or BSMS. "
-            "I can then give exact seat details, fees, documents, and counselling steps for that course.",
-            language_style,
+        if language_style == "hindi":
+            return (
+                "कृपया बताएं कि आप किस पाठ्यक्रम के बारे में पूछ रहे हैं: "
+                "B.Tech, MBA, MCA, BS-MS, M.Sc., M.Tech, या PhD। "
+                "उसके बाद मैं सीटों, शुल्क, दस्तावेजों और काउंसलिंग चरणों की सही जानकारी दे सकूंगा।"
+            )
+        if language_style == "hinglish":
+            return (
+                "Please batayein aap kis course ke baare mein puch rahe hain: "
+                "B.Tech, MBA, MCA, BS-MS, M.Sc., M.Tech, ya PhD. "
+                "Uske baad main seats, fees, documents, aur counselling steps ki exact info de sakunga."
+            )
+        return (
+            "Please tell me which course you are asking about: B.Tech, MBA, MCA, BS-MS, M.Sc., M.Tech, or PhD. "
+            "I can then give exact seat details, fees, documents, and counselling steps for that course."
         )
 
     context_note = f"\n[User context captured so far: {user_context}]" if user_context else ""
@@ -211,11 +243,8 @@ def ai_brain_response(
     except Exception:
         if language_style == "hindi":
             return (
-                "\u092e\u0941\u091d\u0947 \u0905\u092d\u0940 \u0925\u094b\u0921\u093c\u0940 "
-                "\u0926\u093f\u0915\u094d\u0915\u0924 \u0939\u094b \u0930\u0939\u0940 "
-                "\u0939\u0948. \u0915\u0943\u092a\u092f\u093e rank prediction, seats, "
-                "\u092f\u093e counselling process \u0915\u0947 \u092c\u093e\u0930\u0947 "
-                "\u092e\u0947\u0902 \u092a\u0942\u091b\u0947\u0902."
+                "मुझे अभी थोड़ी दिक्कत हो रही है। कृपया रैंक अनुमान, सीटों, "
+                "या काउंसलिंग प्रक्रिया के बारे में पूछें।"
             )
         if language_style == "hinglish":
             return "Mujhe abhi thodi dikkat ho rahi hai. Please rank prediction, seats, ya counselling process ke baare mein puchhein."

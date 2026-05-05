@@ -4,5 +4,6 @@
 // Example:
 // API_BASE: "https://your-service.up.railway.app"
 window.APP_CONFIG = {
-  API_BASE: "https://ample-patience-production12.up.railway.app",
+  // API_BASE: "https://ample-patience-production12.up.railway.app",
+  API_BASE: "",
 };

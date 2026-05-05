@@ -7,7 +7,8 @@ HINGLISH_CUES = {
     "hai", "hain", "hu", "ho", "kya", "kyu", "kyon", "kab", "kaise",
     "kitna", "kitni", "kitne", "batao", "bataye", "batana", "chahiye",
     "milega", "mil sakta", "hoga", "karna", "mera", "meri", "mere",
-    "ka", "ki", "ke", "me", "mein", "se", "tak", "liye", "wala",
+    "ka", "ki", "ke", "mein", "se", "tak", "liye", "wala",
+    "chahiye", "puchna", "puchu", "puchhun", "dikhao", "bhejna",
 }
 
 
@@ -80,6 +81,36 @@ def normalize_multilingual_query(user_message: str) -> str:
         "\u0915\u0948\u0938\u0947": "process",
         "\u092c\u0924\u093e\u0913": "tell me",
         "\u092c\u0924\u093e\u090f\u0902": "tell me",
+        "\u0938\u0941\u0935\u093f\u0927\u093e": "facility",
+        "\u0938\u0941\u0935\u093f\u0927\u093e\u090f\u0902": "facilities",
+        "\u0938\u0941\u0935\u093f\u0927\u093e\u0913\u0902": "facilities",
+        "\u0915\u0947\u0902\u0926\u094d\u0930\u0940\u092f \u0938\u0941\u0935\u093f\u0927\u093e": "central facilities",
+        "\u0915\u0947\u0902\u0926\u094d\u0930\u0940\u092f \u0938\u0941\u0935\u093f\u0927\u093e\u090f\u0902": "central facilities",
+        "\u091b\u093e\u0924\u094d\u0930\u093e\u0935\u093e\u0938": "hostel",
+        "\u0939\u0949\u0938\u094d\u091f\u0932": "hostel",
+        "\u092a\u0941\u0938\u094d\u0924\u0915\u093e\u0932\u092f": "library",
+        "\u0932\u093e\u0907\u092c\u094d\u0930\u0947\u0930\u0940": "library",
+        "\u0938\u094d\u0935\u093e\u0938\u094d\u0925\u094d\u092f \u0915\u0947\u0902\u0926\u094d\u0930": "health centre",
+        "\u092c\u0948\u0902\u0915": "bank",
+        "\u0916\u0947\u0932": "sports",
+        "\u091c\u093f\u092e": "gym",
+        "\u0905\u0924\u093f\u0925\u093f \u0917\u0943\u0939": "guest house",
+        "\u0915\u0948\u0902\u091f\u0940\u0928": "canteen",
+        "\u0938\u092d\u093e\u0917\u093e\u0930": "auditorium",
+        "\u0935\u0930\u094d\u0915\u0936\u0949\u092a": "workshop",
+        "\u0915\u0902\u092a\u094d\u092f\u0942\u091f\u0930 \u0915\u0947\u0902\u0926\u094d\u0930": "computer centre",
+        "\u092c\u0940\u091f\u0947\u0915": "btech",
+        "\u092c\u0940.\u091f\u0947\u0915": "btech",
+        "\u090f\u092e\u092c\u0940\u090f": "mba",
+        "\u090f\u092e.\u092c\u0940.\u090f": "mba",
+        "\u090f\u092e\u0938\u0940\u090f": "mca",
+        "\u090f\u092e.\u0938\u0940.\u090f": "mca",
+        "\u090f\u092e\u090f\u0938\u0938\u0940": "msc",
+        "\u090f\u092e.\u090f\u0938\u0938\u0940": "msc",
+        "\u090f\u092e\u091f\u0947\u0915": "mtech",
+        "\u090f\u092e.\u091f\u0947\u0915": "mtech",
+        "\u092a\u0940\u090f\u091a\u0921\u0940": "phd",
+        "\u092a\u0940.\u090f\u091a.\u0921\u0940": "phd",
     }
 
     hinglish_replacements = {
@@ -132,6 +163,18 @@ def normalize_multilingual_query(user_message: str) -> str:
         "kab hai": "date",
         "kya hai": "information",
         "kaise hoga": "process",
+        "facility kya": "facility",
+        "facilities kya": "facilities",
+        "central facilities": "central facilities",
+        "hostel kaisa": "hostel",
+        "hostel facility": "hostel facility",
+        "library timing": "library timings",
+        "library timings": "library timings",
+        "bank hai": "bank",
+        "sports facility": "sports facility",
+        "gym hai": "gym",
+        "guest house": "guest house",
+        "canteen hai": "canteen",
     }
 
     message = _replace_phrases(message, devanagari_replacements)
@@ -142,13 +185,15 @@ def normalize_multilingual_query(user_message: str) -> str:
 def response_language_instruction(language_style: str) -> str:
     if language_style == "hindi":
         return (
-            "Respond in simple Hindi using Devanagari script. Keep official course "
-            "names, category codes, ranks, URLs, and amounts unchanged."
+            "Respond strictly in Hindi using Devanagari script only. Do not use "
+            "Roman Hindi, Hinglish, or English sentences. Translate common words "
+            "like fees, seats, documents, process, and schedule into Hindi. Keep "
+            "official course names, category codes, ranks, URLs, and amounts unchanged."
         )
     if language_style == "hinglish":
         return (
-            "Respond in natural Hinglish, mixing simple Hindi words in Roman script "
-            "with English admission terms. Keep category codes, ranks, URLs, and "
-            "amounts unchanged."
+            "Respond strictly in natural Hinglish using Roman script only. Do not "
+            "use Devanagari script. Mix simple Hindi words with English admission "
+            "terms where natural. Keep category codes, ranks, URLs, and amounts unchanged."
         )
     return "Respond in English."

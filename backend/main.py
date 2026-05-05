@@ -7,6 +7,10 @@ from db import execute_query, load_memory, save_memory, delete_memory, log_user_
 from mba_knowledge import detect_mba_intent, get_mba_response
 from mca_knowledge import detect_mca_intent, get_mca_response
 from bsms_knowledge import detect_bsms_intent, get_bsms_response
+from msc_knowledge import detect_msc_intent, get_msc_response
+from mtech_knowledge import detect_mtech_intent, get_mtech_response
+from phd_knowledge import detect_phd_intent, get_phd_response
+from central_facilities import detect_central_facilities_intent, get_central_facilities_response
 from organizational_setup import detect_organizational_setup_query, get_organizational_setup_response
 from placements_stats import get_placement_response, get_placement_files_health
 from ai_brain import ai_brain_response, localize_response_text
@@ -350,7 +354,32 @@ def prediction_prompt_text(prompt_key: str, language_style: str, **kwargs) -> st
                 "Aap 'Home State', 'All India', ya sirf 1/2 type kar sakte hain."
             )
 
-    # English default (also used when style is hindi to keep prompts stable).
+    if language_style == "hindi":
+        if prompt_key == "ask_rank":
+            return (
+                "कृपया अपनी JEE Main CRL रैंक बताएं ताकि अनुमान शुरू किया जा सके।\n\n"
+                "नोट: श्रेणी रैंक नहीं, CRL रैंक भेजें।"
+            )
+        if prompt_key == "ask_base_category":
+            return (
+                f"आपकी रैंक {rank} दर्ज कर ली गई है।\n\n"
+                "कृपया अपनी मूल श्रेणी बताएं। (OPEN / BC / SC / ST / EWS)"
+            )
+        if prompt_key == "ask_subcategory":
+            return (
+                f"आपकी रैंक {rank} और मूल श्रेणी {base_category} दर्ज कर ली गई है।\n\n"
+                "क्या आप किसी उप-श्रेणी से संबंधित हैं? आप महिला, PH/PwD, AF, FF, TFW, या कोई नहीं लिख सकते हैं।"
+            )
+        if prompt_key == "ask_quota":
+            return (
+                f"आपकी रैंक {rank} और श्रेणी {base_category} दर्ज कर ली गई है।\n\n"
+                "अब अपना कोटा पुष्टि करें:\n"
+                "1) होम स्टेट\n"
+                "2) ऑल इंडिया\n\n"
+                "आप होम स्टेट, ऑल इंडिया, या सिर्फ 1/2 लिख सकते हैं।"
+            )
+
+    # English default.
     if prompt_key == "ask_rank":
         return (
             "Please tell me your JEE Main CRL (Common Rank List) rank to get started.\n\n"
@@ -760,7 +789,7 @@ def detect_intent(user_message: str) -> str:
 def detect_course_scope(user_message: str, extracted_branches: list[str] | None = None) -> str:
     """
     Detect which course the user explicitly refers to.
-    Returns one of: mba, mca, bsms, btech, multiple, unknown.
+    Returns one of: mba, mca, bsms, msc, mtech, phd, btech, multiple, unknown.
     """
     message = user_message.lower()
     message_norm = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", message)).strip()
@@ -772,6 +801,9 @@ def detect_course_scope(user_message: str, extracted_branches: list[str] | None 
 
     has_mba = re.search(r"\bmba\b", message) is not None
     has_mca = re.search(r"\bmca\b", message) is not None
+    has_msc = re.search(r"\bm\.?\s*sc\b|\bmsc\b", message) is not None
+    has_mtech = re.search(r"\bm\.?\s*tech\b|\bmtech\b", message) is not None
+    has_phd = re.search(r"\bph\.?\s*d\b|\bphd\b|\bdoctorate\b", message) is not None
     has_bsms = any(_has_norm_phrase(p) for p in [
         "bsms",
         "bs ms",
@@ -788,10 +820,23 @@ def detect_course_scope(user_message: str, extracted_branches: list[str] | None 
         or re.search(r"\bjee\b|\bcrl\b", message) is not None
     )
     # Branch mentions imply B.Tech only when non-B.Tech courses are not explicitly requested.
-    has_btech = has_explicit_btech or (bool(extracted_branches) and not (has_mba or has_mca or has_bsms))
+    has_btech = has_explicit_btech or (
+        bool(extracted_branches) and not (has_mba or has_mca or has_bsms or has_msc or has_mtech or has_phd)
+    )
 
-    active = sum([has_mba, has_mca, has_bsms, has_btech])
+    active = sum([has_mba, has_mca, has_bsms, has_msc, has_mtech, has_phd, has_btech])
     if active > 1:
+        course_token = r"(?:b\.?\s*tech|btech|mba|mca|bs[\s-]*ms|msc|m\.?\s*sc|mtech|m\.?\s*tech|phd|ph\.?\s*d)"
+        if re.search(course_token + r".{0,20}\b(?:and|or|vs|versus)\b.{0,20}" + course_token, message):
+            return "multiple"
+        # In PG/PhD eligibility questions, another degree often appears as a
+        # qualifying degree rather than a second target course.
+        if has_phd:
+            return "phd"
+        if has_mtech:
+            return "mtech"
+        if has_msc:
+            return "msc"
         return "multiple"
     if has_mba:
         return "mba"
@@ -799,6 +844,12 @@ def detect_course_scope(user_message: str, extracted_branches: list[str] | None 
         return "mca"
     if has_bsms:
         return "bsms"
+    if has_msc:
+        return "msc"
+    if has_mtech:
+        return "mtech"
+    if has_phd:
+        return "phd"
     if has_btech:
         return "btech"
     return "unknown"
@@ -820,6 +871,39 @@ def infer_course_specific_intent(course: str, user_message: str) -> str:
             if f" {norm_phrase} " in padded_message:
                 return True
         return False
+
+    def _has_reservation_cue() -> bool:
+        strong_cues = [
+            "reservation", "reserved", "quota", "category", "categories",
+            "obc", "ews", "pwd", "divyang", "girl quota", "girl reservation",
+            "armed forces", "freedom fighter", "horizontal reservation",
+            "vertical reservation",
+        ]
+        if _has_any(strong_cues):
+            return True
+
+        # Short category codes like SC/ST/PH collide with course tokens such as M.Sc.
+        # Treat them as reservation intent only when the wording has category context.
+        if re.search(r"\b(sc|st|gl|af|ph|ff)\b", message_norm):
+            return _has_any(["seat", "seats", "reserved", "category", "quota", "reservation"])
+        return False
+
+    def _is_broad_course_overview() -> bool:
+        broad_cues = [
+            "admission", "about", "overview", "details", "information",
+            "info", "tell me", "guide", "course details",
+        ]
+        specific_cues = [
+            "document", "documents", "certificate", "verification",
+            "fee", "fees", "tuition", "cost", "payment", "scholarship",
+            "seat", "seats", "intake", "seat matrix", "vacancy",
+            "reservation", "quota", "category", "eligibility", "criteria",
+            "register", "registration", "apply", "application", "form",
+            "withdraw", "refund", "cancel", "medical", "fitness",
+            "entrance", "exam", "test", "rank", "merit", "cutoff",
+            "schedule", "date", "dates", "timeline", "phase",
+        ]
+        return _has_any(broad_cues) and not _has_any(specific_cues)
 
     if course == "mba":
         if _has_any(["gd/pi", "gd pi", "gdpi", "group discussion", "personal interview", "weightage", "rank formula"]):
@@ -851,7 +935,7 @@ def infer_course_specific_intent(course: str, user_message: str) -> str:
             return "mca_fees"
         if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy"]):
             return "mca_seats"
-        if _has_any(["reservation", "quota", "category", "obc", "sc", "st", "ews", "gl", "af", "ph", "ff"]):
+        if _has_reservation_cue():
             return "mca_reservation"
         if _has_any(["eligibility", "qualification", "criteria", "nimcet", "bca", "maths"]):
             return "mca_eligibility"
@@ -872,7 +956,7 @@ def infer_course_specific_intent(course: str, user_message: str) -> str:
             return "bsms_fees"
         if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy", "total seats", "60 seats"]):
             return "bsms_seats"
-        if _has_any(["reservation", "quota", "category", "obc", "sc", "st", "ews", "gl", "af", "ph", "ff"]):
+        if _has_reservation_cue():
             return "bsms_reservation"
         if _has_any(["eligibility", "qualification", "criteria", "jee", "cuet", "10 2", "marks", "percentage"]):
             return "bsms_eligibility"
@@ -888,6 +972,61 @@ def infer_course_specific_intent(course: str, user_message: str) -> str:
             return "bsms_schedule"
         if _has_any(["round", "rounds", "phase 1", "phase 2", "phase 3", "counselling"]):
             return "bsms_rounds"
+        return "unknown"
+
+    if course in {"msc", "mtech"}:
+        prefix = course
+        if _is_broad_course_overview():
+            return f"{prefix}_general"
+        if _has_any(["program", "programs", "course", "courses", "specialization", "specialisation", "branch", "branches", "offered"]):
+            return f"{prefix}_programs"
+        if _has_any(["document", "documents", "certificate", "verification", "checklist"]):
+            return f"{prefix}_documents"
+        if _has_any(["fee", "fees", "tuition", "cost", "payment", "scholarship", "stipend", "fellowship"]):
+            return f"{prefix}_fees"
+        if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy", "total seats"]):
+            return f"{prefix}_seats"
+        if _has_reservation_cue():
+            return f"{prefix}_reservation"
+        if _has_any(["eligibility", "qualification", "criteria", "marks", "percentage", "cgpa"]):
+            return f"{prefix}_eligibility"
+        if _has_any(["register", "registration", "apply", "application", "form", "portal", "samarth"]):
+            return f"{prefix}_registration"
+        if _has_any(["withdraw", "refund", "cancel", "exit", "processing fee"]):
+            return f"{prefix}_withdrawal"
+        if _has_any(["medical", "fitness", "disability", "pwd", "hearing", "vision", "cmo"]):
+            return f"{prefix}_medical"
+        if _has_any(["entrance", "exam", "test", "rank", "merit", "cutoff", "uet", "cuet", "gate", "jam", "gat b"]):
+            return f"{prefix}_entrance"
+        if _has_any(["schedule", "date", "dates", "timeline", "phase", "july", "august", "last date", "deadline"]):
+            return f"{prefix}_schedule"
+        return "unknown"
+
+    if course == "phd":
+        if _has_any(["exam", "written", "test", "entrance", "interview", "uet", "net", "csir", "gate", "ceed", "weightage"]):
+            return "phd_exam_interview"
+        if _has_any(["full time", "part time", "sponsored", "qip", "category", "categories", "fellowship", "assistantship", "noc"]):
+            return "phd_categories"
+        if _has_any(["document", "documents", "certificate", "verification", "noc", "sponsorship"]):
+            return "phd_documents"
+        if _has_any(["fee", "fees", "tuition", "cost", "payment"]):
+            return "phd_fees"
+        if _has_any(["seat", "seats", "intake", "seat matrix", "vacancy", "total seats"]):
+            return "phd_seats"
+        if _has_reservation_cue():
+            return "phd_reservation"
+        if _has_any(["eligibility", "qualification", "criteria", "marks", "percentage", "cgpa"]):
+            return "phd_eligibility"
+        if _has_any(["register", "registration", "apply", "application", "form", "portal", "samarth"]):
+            return "phd_registration"
+        if _has_any(["withdraw", "refund", "cancel", "exit", "forfeit", "forfeited"]):
+            return "phd_withdrawal"
+        if _has_any(["medical", "fitness", "disability", "hearing", "vision", "cmo"]):
+            return "phd_medical"
+        if _has_any(["schedule", "date", "dates", "timeline", "phase", "august", "last date", "deadline"]):
+            return "phd_schedule"
+        if _has_any(["important", "note", "notes", "rule", "rules", "guideline", "guidelines", "conversion formula"]):
+            return "phd_important_notes"
         return "unknown"
 
     return "unknown"
@@ -2098,6 +2237,10 @@ async def chat(
                 {"label": "MBA Admission", "value": "Tell me about MBA admission at HBTU"},
                 {"label": "MCA Admission", "value": "Tell me about MCA admission at HBTU"},
                 {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission at HBTU"},
+                {"label": "M.Sc. Admission", "value": "Tell me about M.Sc. admission at HBTU"},
+                {"label": "M.Tech Admission", "value": "Tell me about M.Tech admission at HBTU"},
+                {"label": "PhD Admission", "value": "Tell me about PhD admission at HBTU"},
+                {"label": "Central Facilities", "value": "What central facilities are available at HBTU?"},
             ],
         )
 
@@ -2150,7 +2293,36 @@ async def chat(
                 {"label": "MBA Admission", "value": "Tell me about MBA admission"},
                 {"label": "MCA Admission", "value": "Tell me about MCA admission"},
                 {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission"},
+                {"label": "M.Sc. Admission", "value": "Tell me about M.Sc. admission"},
+                {"label": "M.Tech Admission", "value": "Tell me about M.Tech admission"},
+                {"label": "PhD Admission", "value": "Tell me about PhD admission"},
                 {"label": "Admission Contacts", "value": "Who is the admission coordinator for 2026?"},
+            ],
+        )
+
+    facility_intent, facility_confidence = detect_central_facilities_intent(detection_message)
+    if (
+        facility_intent
+        and facility_confidence >= 0.5
+        and (facility_intent != "overview" or course_scope == "unknown" or facility_confidence >= 1.0)
+    ):
+        return respond(
+            f"central_facilities_{facility_intent}",
+            response_type="stream",
+            message=get_central_facilities_response(facility_intent, detection_message),
+            data={"subtopic": facility_intent, "title": "Central Facilities - HBTU"},
+            actions=[
+                {"label": "Hostels", "value": "Tell me about hostel facilities at HBTU"},
+                {"label": "Library", "value": "What are HBTU library timings?"},
+                {"label": "Health Centre", "value": "Tell me about HBTU health centre"},
+                {"label": "Sports", "value": "What sports facilities are available at HBTU?"},
+                {"label": "Bank", "value": "Is there a bank facility at HBTU?"},
+                {"label": "Guest House", "value": "Tell me about the HBTU guest house"},
+            ],
+            suggestions=[
+                "What central facilities are available at HBTU?",
+                "Tell me about the computer centre",
+                "What is the Atal Incubation Hub?",
             ],
         )
 
@@ -2160,13 +2332,16 @@ async def chat(
             response_type="question",
             message=(
                 "I found multiple courses in your message. "
-                "Please ask for one course at a time: B.Tech, MBA, MCA, or BS-MS."
+                "Please ask for one course at a time: B.Tech, MBA, MCA, BS-MS, M.Sc., M.Tech, or PhD."
             ),
             actions=[
                 {"label": "B.Tech", "value": "Tell me about B.Tech admission"},
                 {"label": "MBA", "value": "Tell me about MBA admission"},
                 {"label": "MCA", "value": "Tell me about MCA admission"},
                 {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
+                {"label": "M.Sc.", "value": "Tell me about M.Sc. admission"},
+                {"label": "M.Tech", "value": "Tell me about M.Tech admission"},
+                {"label": "PhD", "value": "Tell me about PhD admission"},
             ],
         )
 
@@ -2279,6 +2454,91 @@ async def chat(
                 "What is the BS-MS registration fee?",
                 "Show BS-MS schedule for 2025-26",
             ],
+        )
+
+    pg_course_handlers = {
+        "msc": {
+            "detect": detect_msc_intent,
+            "get_response": get_msc_response,
+            "general_intent": "msc_general",
+            "title": "M.Sc. Admission - HBTU",
+            "label": "M.Sc.",
+            "topics": [
+                ("Eligibility", "What is M.Sc. eligibility?"),
+                ("Programs", "What M.Sc. programs are offered at HBTU?"),
+                ("Fees", "What are M.Sc. fees?"),
+                ("Seats", "Show M.Sc. seat matrix"),
+                ("Schedule", "Show M.Sc. admission schedule"),
+                ("Documents", "What documents are needed for M.Sc.?"),
+            ],
+            "suggestions": [
+                "What is the fee for M.Sc. Biotechnology?",
+                "What is the eligibility for M.Sc. Physics?",
+                "What exams are accepted for M.Sc.?",
+            ],
+        },
+        "mtech": {
+            "detect": detect_mtech_intent,
+            "get_response": get_mtech_response,
+            "general_intent": "mtech_general",
+            "title": "M.Tech Admission - HBTU",
+            "label": "M.Tech",
+            "topics": [
+                ("Eligibility", "What is M.Tech eligibility?"),
+                ("Programs", "What M.Tech programs are offered at HBTU?"),
+                ("Fees", "What are M.Tech fees?"),
+                ("Seats", "Show M.Tech seat matrix"),
+                ("Schedule", "Show M.Tech admission schedule"),
+                ("Documents", "What documents are needed for M.Tech.?"),
+            ],
+            "suggestions": [
+                "What is the GATE scholarship for M.Tech?",
+                "What is M.Tech CSE eligibility?",
+                "What is the M.Tech registration fee?",
+            ],
+        },
+        "phd": {
+            "detect": detect_phd_intent,
+            "get_response": get_phd_response,
+            "general_intent": "phd_general",
+            "title": "PhD Admission - HBTU",
+            "label": "PhD",
+            "topics": [
+                ("Eligibility", "What is PhD eligibility?"),
+                ("Fees", "What are PhD fees?"),
+                ("Exam/Interview", "Explain PhD exam and interview process"),
+                ("Seats", "Show PhD seat matrix"),
+                ("Schedule", "Show PhD admission schedule"),
+                ("Documents", "What documents are needed for PhD?"),
+            ],
+            "suggestions": [
+                "Who is exempted from the PhD written exam?",
+                "What are PhD full-time and part-time categories?",
+                "What is the PhD registration fee?",
+            ],
+        },
+    }
+
+    if course_scope in pg_course_handlers:
+        config = pg_course_handlers[course_scope]
+        detected_pg_intent, pg_confidence = config["detect"](detection_message)
+        resolved_pg_intent = (
+            detected_pg_intent if (detected_pg_intent and pg_confidence > 0.3)
+            else infer_course_specific_intent(course_scope, detection_message)
+        )
+        if resolved_pg_intent == "unknown":
+            resolved_pg_intent = config["general_intent"]
+
+        return respond(
+            f"{course_scope}_{resolved_pg_intent}",
+            response_type="stream",
+            message=config["get_response"](resolved_pg_intent),
+            data={"subtopic": resolved_pg_intent, "title": config["title"]},
+            actions=[
+                {"label": f"{config['label']} {label}", "value": value}
+                for label, value in config["topics"]
+            ],
+            suggestions=config["suggestions"],
         )
 
     if course_scope == "btech" and intent == "unknown" and not extracted_branches:
@@ -2486,6 +2746,9 @@ async def chat(
                 {"label": "MBA Fees", "value": "What are MBA fees?"},
                 {"label": "MCA Fees", "value": "What are MCA fees?"},
                 {"label": "BS-MS Fees", "value": "What are BS-MS fees?"},
+                {"label": "M.Sc. Fees", "value": "What are M.Sc. fees?"},
+                {"label": "M.Tech Fees", "value": "What are M.Tech fees?"},
+                {"label": "PhD Fees", "value": "What are PhD fees?"},
             ]
         elif any(k in message_lc for k in ["seat", "seats", "seat matrix", "intake", "capacity"]):
             clarify_actions = [
@@ -2493,6 +2756,9 @@ async def chat(
                 {"label": "MBA Seats", "value": "Show MBA seat matrix"},
                 {"label": "MCA Seats", "value": "Show MCA seat matrix"},
                 {"label": "BS-MS Seats", "value": "Show BS-MS seat matrix"},
+                {"label": "M.Sc. Seats", "value": "Show M.Sc. seat matrix"},
+                {"label": "M.Tech Seats", "value": "Show M.Tech seat matrix"},
+                {"label": "PhD Seats", "value": "Show PhD seat matrix"},
             ]
         elif any(k in message_lc for k in ["document", "documents", "certificate", "verification"]):
             clarify_actions = [
@@ -2500,6 +2766,9 @@ async def chat(
                 {"label": "MBA Documents", "value": "What documents are needed for MBA?"},
                 {"label": "MCA Documents", "value": "What documents are needed for MCA?"},
                 {"label": "BS-MS Documents", "value": "What documents are needed for BS-MS?"},
+                {"label": "M.Sc. Documents", "value": "What documents are needed for M.Sc.?"},
+                {"label": "M.Tech Documents", "value": "What documents are needed for M.Tech.?"},
+                {"label": "PhD Documents", "value": "What documents are needed for PhD?"},
             ]
         elif any(k in message_lc for k in ["reservation", "quota", "category", "obc", "sc", "st", "ews"]):
             clarify_actions = [
@@ -2507,6 +2776,9 @@ async def chat(
                 {"label": "MBA Reservation", "value": "What is MBA reservation policy?"},
                 {"label": "MCA Reservation", "value": "What is MCA reservation policy?"},
                 {"label": "BS-MS Reservation", "value": "What is BS-MS reservation policy?"},
+                {"label": "M.Sc. Reservation", "value": "What is M.Sc. reservation policy?"},
+                {"label": "M.Tech Reservation", "value": "What is M.Tech reservation policy?"},
+                {"label": "PhD Reservation", "value": "What is PhD reservation policy?"},
             ]
         elif any(k in message_lc for k in ["date", "dates", "schedule", "timeline", "start"]):
             clarify_actions = [
@@ -2514,6 +2786,9 @@ async def chat(
                 {"label": "MBA Schedule", "value": "Show MBA counselling schedule"},
                 {"label": "MCA Schedule", "value": "Show MCA counselling schedule"},
                 {"label": "BS-MS Schedule", "value": "Show BS-MS counselling schedule"},
+                {"label": "M.Sc. Schedule", "value": "Show M.Sc. admission schedule"},
+                {"label": "M.Tech Schedule", "value": "Show M.Tech admission schedule"},
+                {"label": "PhD Schedule", "value": "Show PhD admission schedule"},
             ]
         elif any(k in message_lc for k in ["eligibility", "eligible", "criteria", "qualification"]):
             clarify_actions = [
@@ -2521,6 +2796,9 @@ async def chat(
                 {"label": "MBA Eligibility", "value": "What is MBA eligibility?"},
                 {"label": "MCA Eligibility", "value": "What is MCA eligibility?"},
                 {"label": "BS-MS Eligibility", "value": "What is BS-MS eligibility?"},
+                {"label": "M.Sc. Eligibility", "value": "What is M.Sc. eligibility?"},
+                {"label": "M.Tech Eligibility", "value": "What is M.Tech eligibility?"},
+                {"label": "PhD Eligibility", "value": "What is PhD eligibility?"},
             ]
         else:
             clarify_actions = [
@@ -2528,6 +2806,9 @@ async def chat(
                 {"label": "MBA", "value": "Tell me about MBA admission"},
                 {"label": "MCA", "value": "Tell me about MCA admission"},
                 {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
+                {"label": "M.Sc.", "value": "Tell me about M.Sc. admission"},
+                {"label": "M.Tech", "value": "Tell me about M.Tech admission"},
+                {"label": "PhD", "value": "Tell me about PhD admission"},
             ]
 
         return respond(
@@ -2685,5 +2966,6 @@ async def chat(
             {"label": "🎓 MBA Admission",       "value": "Tell me about MBA admission at HBTU"},
             {"label": "🧑‍💻 MCA Admission",      "value": "Tell me about MCA admission at HBTU"},
             {"label": "📐 BS-MS Admission",      "value": "Tell me about BS-MS admission at HBTU"},
+            {"label": "Central Facilities",      "value": "What central facilities are available at HBTU?"},
         ],
     )
