@@ -7,7 +7,7 @@ This repository contains a FastAPI-based admission chatbot for HBTU that combine
 - **B.Tech rank-based branch prediction** (historical ORCR driven)
 - **B.Tech seat matrix lookups** (normalized seat matrix data)
 - **B.Tech counselling Q&A** (rule-based subtopic routing)
-- **MBA, MCA, and BS-MS dedicated knowledge modules**
+- **MBA, MCA, BS-MS, M.Sc., M.Tech, and PhD dedicated knowledge modules**
 - **Placement statistics Q&A** across two academic sessions
 - **Multilingual handling** (English/Hindi/Hinglish normalization + localized response behavior)
 - **Persistent conversation memory + async query logging** in PostgreSQL
@@ -22,7 +22,7 @@ The implementation is modular, production-oriented for small deployments, and in
 
 - Conversational admissions guidance through `/chat`
 - Structured APIs for health, prediction, and seat lookups
-- Multi-course admission guidance: **B.Tech, MBA, MCA, BS-MS**
+- Multi-course admission guidance: **B.Tech, MBA, MCA, BS-MS, M.Sc., M.Tech, PhD**
 - Placement insights from local CSV files
 - Session memory for multi-turn prediction intake (rank/category/quota/subcategory)
 
@@ -44,7 +44,7 @@ The implementation is modular, production-oriented for small deployments, and in
   - FastAPI app setup, CORS, routes, error handling
   - Intent detection/routing orchestration
   - Prediction and seats flow integration
-  - Course disambiguation (B.Tech vs MBA/MCA/BS-MS)
+  - Course disambiguation (B.Tech vs MBA/MCA/BS-MS/M.Sc./M.Tech/PhD)
   - Memory-aware conversational flow (`awaiting` state)
 - `backend/db.py`
   - PostgreSQL pooled connectivity
@@ -56,6 +56,9 @@ The implementation is modular, production-oriented for small deployments, and in
   - Placement intent parsing and metric responses
 - `backend/mba_knowledge.py`, `backend/mca_knowledge.py`, `backend/bsms_knowledge.py`
   - Course-specific knowledge bases + intent detectors
+- `backend/msc_knowledge.py`, `backend/mtech_knowledge.py`, `backend/phd_knowledge.py`
+  - Course-specific knowledge bases + intent detectors
+  - 2026-27 PG/PhD admission guidance from official guideline documents
 - `backend/ai_brain.py`
   - LLM fallback and response shaping policy
 - `backend/language_utils.py`
@@ -99,7 +102,7 @@ Routing is intentionally layered to reduce false positives:
 
 1. Normalize multilingual query for detection
 2. Detect broad intent (`predict`, `seats`, `fees`, `placement`, `counselling_info`, `unknown`)
-3. Detect explicit course scope (MBA/MCA/BS-MS/B.Tech/multiple)
+3. Detect explicit course scope (B.Tech/MBA/MCA/BS-MS/M.Sc./M.Tech/PhD/multiple)
 4. Handle high-priority flows first (placement and course-specialized modules)
 5. Run B.Tech-specific deterministic flows (prediction/seats/counselling)
 6. Use AI fallback for open-ended or unmatched asks
@@ -126,9 +129,10 @@ Key properties:
 
 The system prevents ambiguous cross-course answers by:
 
-- Explicit **course scope detection**
+- Explicit **course scope detection** across UG, PG, and PhD admission programs
 - Returning clarification prompts when user asks generic terms (fees, seats, docs) without specifying course
 - Rejecting mixed multi-course asks in one prompt with guided options
+- Prioritizing target PG/PhD course names over qualifying-degree mentions (for example, "PhD eligibility after M.Tech" routes to PhD)
 
 ---
 
@@ -171,6 +175,21 @@ The system prevents ambiguous cross-course answers by:
 - Built-in 2026 admissions program list and routes
 - Helpdesk lookup by topic with contacts and response cards
 
+### 6.6 Dedicated PG and PhD Knowledge Modules
+
+The chatbot now includes official-guideline-backed knowledge modules for:
+
+- **M.Sc.** admissions, including eligibility by program, IIT JAM/CUET-PG/GAT-B/UET entrance routes, fee structure, schedule, seat matrix, reservation, documents, refund, and medical standards
+- **M.Tech** admissions, including GATE/CUET-PG/UET preference, AICTE PG scholarship, program-wise eligibility, Chemical Technology stream-wise eligibility, fee structure, schedule, seat matrix, reservation, documents, refund, and medical standards
+- **PhD** admissions, including eligibility by school/department, written examination and interview rules, NET/GATE/CEED exemptions, full-time/sponsored/part-time/QIP categories, fellowship, seat matrix, fee structure, schedule, reservation, documents, refund, and medical standards
+
+Each module follows the same pattern as the existing MBA/MCA/BS-MS files:
+
+- `*_KB` dictionary of factual response sections
+- `*_INTENT_KEYWORDS` map for deterministic intent detection
+- `get_*_response()` for response lookup
+- `detect_*_intent()` returning `(intent, confidence)`
+
 ---
 
 ## 7) Reliability and Operations
@@ -204,6 +223,8 @@ Frontend is a single-page app (`backend/frontend/index.html`) with:
 
 The UI is functionally rich for a single-file frontend and tightly aligned with backend response schema.
 
+Prediction result cards also include a visual note below the chance groups clarifying that low or very low chance does not fully rule out admission, because spot/offline counselling may still open seats if vacancies remain.
+
 ---
 
 ## 9) Overall Assessment
@@ -211,7 +232,7 @@ The UI is functionally rich for a single-file frontend and tightly aligned with 
 The project is a **rule-first admission assistant** with practical conversational behavior and strong domain specialization for HBTU. It is particularly good at:
 
 - guided branch prediction intake
-- deterministic factual modules for multiple courses
+- deterministic factual modules for multiple courses, now including PG and PhD programs
 - balancing deterministic control with AI fallback
 
 The next architectural improvement would be splitting `main.py` into dedicated routers/services while preserving the same response contract used by the frontend.
