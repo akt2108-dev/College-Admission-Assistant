@@ -1,6 +1,7 @@
 """
 MBA Admission Knowledge Base for HBTU Chatbot
 Source: Official Guidelines for Admission in MBA Program at HBTU, Kanpur (Session 2026-27)
+Last Updated: May 2026
 """
 
 MBA_KB = {
@@ -57,7 +58,6 @@ MBA_KB = {
     # ─────────────────────────────────────────────
     # FEES
     # ─────────────────────────────────────────────
-
     "fees": """
 **MBA Fee Structure at HBTU, Kanpur (Session 2026-27)**
 
@@ -104,11 +104,11 @@ The admission process is conducted in **two phases**:
 - Balance Fee Deposit / Withdrawal: 30 April – 6 May 2026
 
 **Round 2** (CAT / CMAT / AIMA-MAT / CUET-PG 2026 / UET-2026*)
-- Registration: 6 May – 16 June 2026
-- Document Verification (Offline): 21 May – 23 May 2026
-- Partial Fee + GD/PI: 25 May – 27 May 2026
-- Seat Allotment Result: **29 May 2026**
-- Balance Fee Deposit / Withdrawal: 30 May – 5 June 2026
+- Registration: 29 April – 24 May 2026
+- Document Verification (Offline): 25 May – 26 May 2026
+- Partial Fee + GD/PI: 28 May – 30 May 2026
+- Seat Allotment Result: **2 June 2026**
+- Balance Fee Deposit / Withdrawal: 3 June – 6 June 2026
 
 **Round 3 & Round 4** — Dates to be announced later
 - Same process as Round 2
@@ -147,7 +147,6 @@ The admission process is conducted in **two phases**:
     # ─────────────────────────────────────────────
     # SEAT MATRIX
     # ─────────────────────────────────────────────
-
     "seats": """
 **MBA Seat Matrix at HBTU, Kanpur (Session 2026-27)**
 
@@ -177,16 +176,15 @@ The admission process is conducted in **two phases**:
 | ST | PH | 0 |
 | EWS | NO | 17 |
 | EWS | GL | 5 |
-| EWS | AF | 1 |
+| EWS | AF | 0 |
 | EWS | FF | 1 |
-| EWS | PH | 0 |
+| EWS | PH | 1 |
 | **TOTAL** |  | **240** |
 """,
 
     # ─────────────────────────────────────────────
     # RESERVATION
     # ─────────────────────────────────────────────
-
     "reservation": """
 Reservation Policy for MBA at HBTU (2026-27)
 
@@ -327,11 +325,11 @@ Candidates must be **physically and mentally fit** to pursue studies.
 | | Partial Fee + GD/PI | 24 Apr – 27 Apr 2026 |
 | | **Seat Allotment Result** | **29 Apr 2026** |
 | | Balance Fee / Withdrawal | 30 Apr – 6 May 2026 |
-| **Round 2** | Registration (CAT/CMAT/AIMA-MAT/CUET-PG/UET) | 6 May – 16 Jun 2026 |
-| | Document Verification (Offline) | 21 May – 23 May 2026 |
-| | Partial Fee + GD/PI | 25 May – 27 May 2026 |
-| | **Seat Allotment Result** | **29 May 2026** |
-| | Balance Fee / Withdrawal | 30 May – 5 Jun 2026 |
+| **Round 2** | Registration (CAT/CMAT/AIMA-MAT/CUET-PG/UET) | 29 Apr – 24 May 2026 |
+| | Document Verification (Offline) | 25 May – 26 May 2026 |
+| | Partial Fee + GD/PI | 28 May – 30 May 2026 |
+| | **Seat Allotment Result** | **2 Jun 2026** |
+| | Balance Fee / Withdrawal | 3 Jun – 6 Jun 2026 |
 | **Round 3 & 4** | Registration & All Activities | To be announced |
 | **Phase II** | Spot/Offline Counselling | To be announced |
 
@@ -388,7 +386,7 @@ MBA_INTENT_KEYWORDS = {
     ],
     "mba_schedule": [
         "mba schedule", "mba timetable", "mba dates", "mba timeline",
-        "when is mba", "mba april", "mba may", "mba counselling date"
+        "when is mba", "mba april", "mba may", "mba june", "mba counselling date"
     ],
     "mba_general": [
         "mba admission", "mba hbtu", "hbtu mba", "mba program",

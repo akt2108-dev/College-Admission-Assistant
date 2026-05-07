@@ -248,8 +248,6 @@ All stream-wise qualifying degrees require **minimum 55% marks** (50% for SC/ST/
 | PT | Paint Technology | 5 | 1 | 0 | 0 | 3 | 1 | 2 | 1 | 1 | 1 | 0 | 15 |
 | PL | Plastic Technology | 5 | 1 | 0 | 0 | 3 | 1 | 2 | 1 | 0 | 2 | 0 | 15 |
 | **TOTAL** | | | | | | | | | | | | | **232** |
-
-(Columns OP-FF, BC-AF, BC-FF, BC-PH, SC-AF, SC-FF, SC-PH, ST-GL, ST-AF, ST-FF, ST-PH, EWS-AF, EWS-FF, EWS-PH are 0 for all programs)
 """,
 
     # ─────────────────────────────────────────────

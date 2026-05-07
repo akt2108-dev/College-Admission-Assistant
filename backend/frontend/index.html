@@ -298,7 +298,7 @@ body::before{
 .row.user .ts{text-align:right}
 
 /* ── Typing ──────────────────────────────────── */
-#typing{display:none;align-items:flex-end;gap:8px;padding:4px 14px 0;flex-shrink:0}
+#typing{display:none;align-items:flex-start;gap:8px;padding:0 14px 4px;flex-shrink:0}
 #typing.on{display:flex;animation:pop .3s forwards}
 .tbl{
   background:rgba(255,255,255,.05);border:1px solid var(--border);
@@ -1240,7 +1240,7 @@ function buildPredictionCard(data) {
 
   const note = document.createElement("div");
   note.className = "pred-note";
-  note.textContent = "Don’t let this prediction bring you down. It’s based only on past counselling data and trends, not on your actual outcome. A low or very low chance doesn’t mean admission is impossible—it just means it may be less likely in the early rounds. Spot or offline counselling often works differently, and vacancies can open up unexpectedly. Stay hopeful, stay prepared, and keep exploring all options—things can still turn in your favor.";
+  note.textContent = "Don’t let this prediction discourage you 💙 It’s based only on past counselling trends, not your actual result. A low chance doesn’t mean admission is impossible ✨ Spot or offline counselling and unexpected vacancies can still work in your favor 🤝 Stay hopeful and keep exploring all options 🌟";
   card.appendChild(note);
 
   return card;

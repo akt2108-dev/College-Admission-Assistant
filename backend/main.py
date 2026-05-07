@@ -10,6 +10,7 @@ from bsms_knowledge import detect_bsms_intent, get_bsms_response
 from msc_knowledge import detect_msc_intent, get_msc_response
 from mtech_knowledge import detect_mtech_intent, get_mtech_response
 from phd_knowledge import detect_phd_intent, get_phd_response
+from admission_brochure import detect_brochure_intent, get_brochure_response
 from central_facilities import detect_central_facilities_intent, get_central_facilities_response
 from organizational_setup import detect_organizational_setup_query, get_organizational_setup_response
 from placements_stats import get_placement_response, get_placement_files_health
@@ -2282,21 +2283,27 @@ async def chat(
             suggestions=hd["suggestions"],
         )
 
-    if detect_programs_query(detection_message):
+    # Check for general brochure intent ONLY if course_scope is unknown
+    # (Don't intercept course-specific queries like "when will MBA start")
+    if course_scope == "unknown" and detect_brochure_intent(detection_message):
+        brochure_payload = get_brochure_response(detection_message)
         return respond(
             "admission_programs",
-            response_type="stream",
-            message=get_programs_response(),
-            data={"source": "admission_brochure_2026_27"},
+            response_type="default",
+            message=brochure_payload.get("message", "Admission brochure details are unavailable right now."),
+            data={
+                "source": "admission_brochure_2026_27",
+                "brochure": brochure_payload.get("data", {}),
+            },
             actions=[
-                {"label": "B.Tech Counselling", "value": "Explain the B.Tech counselling process"},
-                {"label": "MBA Admission", "value": "Tell me about MBA admission"},
-                {"label": "MCA Admission", "value": "Tell me about MCA admission"},
-                {"label": "BS-MS Admission", "value": "Tell me about BS-MS admission"},
-                {"label": "M.Sc. Admission", "value": "Tell me about M.Sc. admission"},
-                {"label": "M.Tech Admission", "value": "Tell me about M.Tech admission"},
-                {"label": "PhD Admission", "value": "Tell me about PhD admission"},
-                {"label": "Admission Contacts", "value": "Who is the admission coordinator for 2026?"},
+                {"label": "B.Tech", "value": "Tell me about B.Tech admission"},
+                {"label": "MBA", "value": "Tell me about MBA admission"},
+                {"label": "MCA", "value": "Tell me about MCA admission"},
+                {"label": "BS-MS", "value": "Tell me about BS-MS admission"},
+                {"label": "M.Sc.", "value": "Tell me about M.Sc. admission"},
+                {"label": "M.Tech", "value": "Tell me about M.Tech admission"},
+                {"label": "PhD", "value": "Tell me about PhD admission"},
+                {"label": "B.Pharm", "value": "Tell me about B.Pharm admission"},
             ],
         )
 
